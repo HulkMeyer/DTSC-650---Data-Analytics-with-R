@@ -1,0 +1,145 @@
+---
+title: "fastfoodStats Assignment Description and Building"
+author: "HulkMeyer"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+Load Packages
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(openintro)
+library(lm.beta)
+```
+The actual data set is called fastfood
+* Round all float/dbl values to two decimal places
+* All Statistics should be run with variables in the order stated
+
+Accessing the data set
+```{r}
+fastfood <- openintro::fastfood
+```
+Take a look at the data
+```{r}
+head(fastfood,10)
+```
+
+## Problem 1
+Create a correlation matrix for the relations between calories, total_fat, sugar, calcium for all items at Sonic, Subway, Taco Bell, omitting missing values with na.omit()
+*Assign the matrix to Q1
+```{r}
+fastfood_sub1 <- fastfood %>%
+  select(restaurant, calories, total_fat, sugar, calcium) %>%
+  filter(restaurant == 'Sonic' | restaurant == 'Subway' | restaurant == 'Taco Bell') %>%
+  na.omit() %>%
+  select(calories, total_fat, sugar, calcium)
+round(cor(fastfood_sub1),2)
+```
+## Problem 2
+Create a regression predicting whether or not a restaurant is McDonalds or Subway based on 
+  calories, sodium, protein
+  McDonalds should be 1 and Subway = 0
+Hint: make sure you know how McDonalds is spelled in the dataset
+* Assing the model coefficients to Q2
+```{r}
+fastfood_sub2 <- fastfood %>%
+  select(restaurant, calories, sodium, protein) %>%
+  filter(restaurant == 'Mcdonalds' | restaurant == 'Subway') %>%
+  mutate(restaurant = ifelse(restaurant == 'Subway',0,1)) %>%
+  na.omit()
+sub2_log_reg <- glm(restaurant ~ calories + sodium + protein, binomial(), fastfood_sub2)
+Q2 <- round(sub2_log_reg$coefficients,2)
+```
+
+## Problem 3
+Run the same regression as in Q2 but remove sodium as a predictor.  Which is the better model?
+* Use the classical AIC(k=2)
+* Assign the AIC of the better model to Q3
+```{r}
+fastfood_sub3 <- fastfood %>%
+  select(restaurant, calories, protein) %>%
+  filter(restaurant == 'Mcdonalds' | restaurant == 'Subway') %>%
+  mutate(restaurant = ifelse(restaurant == 'Subway',0,1)) %>%
+  na.omit()
+sub3_log_reg <- glm(restaurant ~ calories + protein, binomial(), fastfood_sub3)
+round(AIC(sub2_log_reg),2)
+round(AIC(sub3_log_reg),2)
+```
+
+## Problem 4
+Run a regression predicting calories from saturated fat, fiber, and sugar.  Based on *standardized* regression coefficient, identify the strongest predictor. 
+* Assume the **un**standardized regression coefficient of the strongest predictor to Q4
+* You can access the coeffcients by indexing the model object
+```{r}
+fastfood_sub4 <- fastfood %>%
+  select(calories, sat_fat, fiber, sugar) %>%
+  na.omit()
+sub4_multi_reg <- lm(calories ~ sat_fat + fiber + sugar, fastfood_sub4)
+sub4_std_reg <- lm.beta(sub4_multi_reg)
+```
+```{r}
+sub4_multi_reg
+```
+```{r}
+Q4 <- round(sub4_multi_reg$coefficients[2],2)
+```
+
+## Problem 5
+For this question, use data from only restaurants with between 50 and 60 items in the data set. 
+Predict total fat from cholesterol, total carbs, vitamin a and restaurant.  Remove any nonsignificant predictors and run again
+* Assign the strongest standardized regression coefficient to Q5. 
+```{r}
+fastfood %>% count(restaurant, sort = TRUE)
+```
+
+```{r}
+fastfood_sub5 <- fastfood %>%
+  select(total_fat, cholesterol, total_carb, vit_a, restaurant) %>%
+  group_by(restaurant) %>%
+  filter(restaurant == 'Mcdonalds' | restaurant == 'Arbys' | restaurant == 'Sonic')
+
+# Multiple Regression   
+fastfood_sub5_reg <- lm(total_fat ~ cholesterol + total_carb + restaurant, fastfood_sub5)
+
+# Standardized Regression
+stdreg_fastfood_sub5_reg <- lm.beta(fastfood_sub5_reg)
+
+Q5 <- round(stdreg_fastfood_sub5_reg$standardized.coefficients[2],2)
+```
+```{r}
+summary(stdreg_fastfood_sub5_reg)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,137 @@
+---
+title: "fastfood Assignment Description and Building"
+author: "HulkMeyer"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+# fastfood Assignment Description
+For this assignment, you must name your R file nycflights13.R
+* For all questions you should load tidyverse and nycflights13.  You should not need to use any other libraries. 
+  * If the tidyverse package is not installed, you’ll need to do a one-time installation from the Console Window in RStudio like this:
+    install.packages("tidyverse")
+    **You cannot attempt to install packages in code that you submit to CodeGrade. **
+  * If the nycflights13 package is not installed, you’ll need to do a one-time installation from the Console Window in RStudio like this:
+    install.packages("openintro")
+    **You cannot attempt to install packages in code that you submit to CodeGrade.** 
+  * Load tidyverse with: 
+    **suppressPackageStartupMessages(library(tidyverse))**
+  * Load nycflights13 with:
+    **suppressPackageStartupMessages(library(openintro))**
+  * The actual data set is called flights.
+    See the nycflights13 package page and chapter 5 from the textbook for more info.
+* Round all float/dbl values to two decimal places.
+  * If your rounding does not work the way you expect, convert the tibble to a dataframe by using as.data.frame()
+* All statistics should be run with variables in the order I state
+  * E.g., “Run a regression predicting mileage from mpg, make, and type” would be:
+    **lm(mileage ~ mpg + make + type...)**
+    
+## Setting up packages
+```{r warning=FALSE}
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(psych))
+suppressPackageStartupMessages(library(openintro))
+```
+## Taking a look at the data
+```{r}
+data("fastfood")
+fastfood <- openintro::fastfood
+```
+```{r}
+psych::describe(fastfood)
+summary(fastfood)
+head(fastfood)
+fastfood
+```
+## Problem 1
+Looking only at Burger King and Chick-Fil-A, which item has the highest Calories?
+  * THe answer may be a tibble or a dataframe.  Assign it to Q1. Only need the name of the item.
+```{r}
+Q1 <- fastfood %>%
+  select(restaurant, item, calories) %>%
+  filter(restaurant == 'Burger King' | restaurant == 'Chick Fil-A') %>%
+  arrange(desc(calories)) %>%
+  select(item) %>%
+  head(1)
+ 
+Q1
+```
+## Problem 2
+What is the mean sugar amount for all items from Subway?
+  * Assign the answer to Q2
+```{r}
+Q2 <- fastfood %>%
+  select(restaurant, sugar) %>%
+  filter(restaurant == 'Subway') %>%
+  summarise(mean_sugar = round(mean(sugar), 2)) %>%
+  as.data.frame()
+  
+Q2
+```
+### Problem 3
+What is the mean value of calories for all items from Taco Bell?
+  * Assign the answer to Q3
+```{r}
+Q3 <- fastfood %>%
+  select(restaurant, calories) %>%
+  filter(restaurant == 'Taco Bell') %>%
+  summarise(mean_calories = round(mean(calories), 2)) %>%
+  as.data.frame()
+  
+Q3
+```
+## Problem 4
+Create a variable equal to total_fat x sugar called fatXsugar.  Produce a tibble that has the restaurant, item, and fatXsugar for the top 3 items, from highest to lowest. 
+  * Your answer should be in a 3 X 3 tibble assigned to Q4.
+```{r}
+Q4 <- fastfood %>%
+  mutate(fatXsugar = total_fat * sugar) %>%
+  select(restaurant, item, fatXsugar) %>%
+  arrange(desc(fatXsugar)) %>%
+  head(3)
+ 
+Q4
+```
+## Problem 5
+How many restaurants have an average saturated fat over 10?
+  * Your answer should be on integer assigned to Q5
+```{r}
+Q5 <- fastfood %>%
+  group_by(restaurant) %>%
+  summarise(avg_satfat = round(mean(sat_fat),2)) %>%
+  filter(avg_satfat > 10) %>%
+  nrow()
+
+Q5
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

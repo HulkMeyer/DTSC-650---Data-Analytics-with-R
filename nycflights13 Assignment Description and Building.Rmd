@@ -1,0 +1,117 @@
+---
+title: "nycflights13 Assignment Description and building"
+author: "HulkMeyer"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+# nycflights13 Assignment Description
+
+For this assignment, you must name your R file nycflights13.R
+* For all questions you should load tidyverse and nycflights13.  You should not need to use any other libraries. 
+  * If the tidyverse package is not installed, you’ll need to do a one-time installation from the Console Window in RStudio like this:
+    install.packages("tidyverse")
+    **You cannot attempt to install packages in code that you submit to CodeGrade. **
+  * If the nycflights13 package is not installed, you’ll need to do a one-time installation from the Console Window in RStudio like this:
+    install.packages("nycflights13")
+    **You cannot attempt to install packages in code that you submit to CodeGrade.** 
+  * Load tidyverse with: 
+    **suppressPackageStartupMessages(library(tidyverse))**
+  * Load nycflights13 with:
+    **suppressPackageStartupMessages(library(nycflights13))**
+  * The actual data set is called flights.
+    See the nycflights13 package page and chapter 5 from the textbook for more info.
+* Round all float/dbl values to two decimal places.
+  * If your rounding does not work the way you expect, convert the tibble to a dataframe by using as.data.frame()
+* All statistics should be run with variables in the order I state
+  * E.g., “Run a regression predicting mileage from mpg, make, and type” would be:
+    **lm(mileage ~ mpg + make + type...)**
+
+**Before attempting to answer these questions, please review all CodeGrade information provided in the CodeGrade: Intro module. If you do not, you are likely to lose points. **
+## Setting up packages
+```{r warning=FALSE, include=FALSE}
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(nycflights13))
+suppressPackageStartupMessages(library(psych))
+```
+## Take a look at the data
+```{r}
+psych::describe(flights)
+```
+```{r}
+head(flights)
+```
+```{r}
+summary(flights)
+```
+
+## Problem 1
+** What is the mean distance of flights for each of the carriers AA, EV, and FL?
+    * This answer should e a dataframe assigned to Q1.
+```{r}
+Q1 <- flights %>%
+  group_by(carrier) %>%
+  filter(carrier == 'AA' | carrier == 'EV' | carrier == 'FL') %>%
+  summarise(avg_dis = round(mean(distance),2)) %>%
+  as.data.frame()
+```
+## Problem 2
+For the month with the highest number of flights what is the value?
+  * The answer should be assigned to Q2. 
+```{r}
+Q2 <- flights %>%
+  group_by(month) %>%
+  summarise(NumFlights = n()) %>%
+  arrange(desc(NumFlights)) %>%
+  head(1)
+```
+## Problem 3
+Find the five shortest minimum distances, called min_disct, by origin/destination combination.
+  * The answer should be a tibble assigned to Q3.
+```{r}
+Q3 <- flights %>%
+  mutate(min_dist = distance) %>% #creates min_distance parameter
+  select(origin, dest, min_dist) %>% #selects columns for output
+  arrange(min_dist) %>% # arrange from shortest to longest
+  distinct(origin, dest, min_dist) %>% #Give distinct routes
+  head(5) # outputs first 5 rows
+Q3
+```
+## Problem 4
+What five days of the year had the highest mean distance when leaving JFK?  Sort in Decending order.
+  * The answer should be a datafraem assigned to Q4.
+```{r}
+Q4 <- flights %>%
+  filter(origin == 'JFK') %>%
+  group_by(month, day) %>%
+  mutate(mean_distance = round(mean(distance,na.rm = TRUE),2)) %>%
+  select(month, day, mean_distance) %>%
+  distinct(month, day, mean_distance) %>%
+  arrange(desc(mean_distance)) %>%
+  head(5) %>%
+  as.data.frame()
+Q4
+```
+## Problem 5
+Calculate the maximum arrival delay for flights to Boston and Atlanta, separately.
+  * The answer should be a tibble assigned to Q5
+```{r}
+Q5 <- flights %>%
+  group_by(carrier) %>%
+  filter(dest == 'ATL' | dest == 'BOS') %>%
+  group_by(dest) %>%
+  summarise(max(arr_delay, na.rm = TRUE))
+  
+  
+  
+  
+  
+  
+  
+  
+Q5
+```
+```{r}
+flights
+```
+
+

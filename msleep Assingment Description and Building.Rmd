@@ -1,0 +1,124 @@
+---
+title: "msleep Assignment Description"
+author: "HulkMeyer"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+# msleep Assignment Description
+For this assignment, you must name your R file nycflights13.R
+* For all questions you should load tidyverse and nycflights13.  You should not need to use any other libraries. 
+  * If the tidyverse package is not installed, you’ll need to do a one-time installation from the Console Window in RStudio like this:
+    install.packages("tidyverse")
+    **You cannot attempt to install packages in code that you submit to CodeGrade. **
+  * If the nycflights13 package is not installed, you’ll need to do a one-time installation from the Console Window in RStudio like this:
+    install.packages("nycflights13")
+    **You cannot attempt to install packages in code that you submit to CodeGrade.** 
+  * Load tidyverse with: 
+    **suppressPackageStartupMessages(library(tidyverse))**
+  * Load nycflights13 with:
+    **suppressPackageStartupMessages(library(nycflights13))**
+  * The actual data set is called flights.
+    See the nycflights13 package page and chapter 5 from the textbook for more info.
+* Round all float/dbl values to two decimal places.
+  * If your rounding does not work the way you expect, convert the tibble to a dataframe by using as.data.frame()
+* All statistics should be run with variables in the order I state
+  * E.g., “Run a regression predicting mileage from mpg, make, and type” would be:
+    **lm(mileage ~ mpg + make + type...)**
+    
+## Setting up packages
+```{r}
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(psych))
+msleep
+```
+```{r}
+psych::describe(msleep)
+Hmisc::describe(msleep)
+summary(msleep)
+head(msleep)
+
+```
+## Problem 1
+What is the variance in total sleep for carnivores and those whose conservation status is 1c?
+  * You should be in a data frame with a value called var
+```{r}
+Q1 <- msleep %>%
+  filter(vore == 'carni' & conservation == 'lc' ) %>%
+  summarise(var = round(var(sleep_total),2)) %>%
+  as.data.frame()
+ 
+Q1
+```
+# Problem 2
+What rodent(order Rodentia) has the highest total sleep / REM sleep ratio?
+  * Your answer should be in a tibble assigned to Q2
+```{r}
+Q2 <- msleep %>%
+  filter(order == 'Rodentia') %>%
+  mutate(ratio = round(sleep_total/sleep_rem, 2)) %>%
+  arrange(desc(ratio)) %>%
+  select(name) %>%
+  head(1)
+
+Q2
+```
+## Problem 3
+How many primates have a bodyweight/braingwt ratio greater than 100?
+  * The answer should be assigned to Q3.
+```{r}
+Q3 <- msleep %>%
+  filter(order == 'Primates') %>%
+  mutate(ratio = bodywt/brainwt) %>%
+  filter(ratio >= 100) %>%
+  count(ratio >= 100)
+
+Q3
+```
+## Problem 4
+Create two new variables, mean of sleep total(named mean_sleep) and variance of sleep total(named var_sleep), grouped by conservation with missing values removed. 
+  * The answer should be a dataframe assigned to Q4.
+```{r}
+Q4 <- msleep %>%
+  group_by(conservation) %>%
+  mutate(mean_sleep = round(mean(sleep_total,na.rm = TRUE), 2)) %>%
+  mutate(var_sleep = round(var(sleep_total,na.rm = TRUE), 2)) %>%
+  distinct(conservation, mean_sleep, var_sleep) %>%
+  arrange(conservation) %>%
+  head(6) %>%
+  as.data.frame()
+ 
+Q4
+```
+# Problem 5
+Provide the name(s) of all the domesticated herbivores that sleep more than 12 hours. 
+  * Your answer should be in a tibble assigned to Q5.
+```{r}
+Q5 <- msleep %>%
+  filter(conservation == 'domesticated' & vore == 'herbi' & sleep_total >= 12) %>%
+  select(name)
+ 
+Q5
+```
+
+```{r}
+head(msleep
+     )
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

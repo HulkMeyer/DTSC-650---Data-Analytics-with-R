@@ -1,0 +1,134 @@
+---
+title: "pizza Assignment Description and Building"
+author: "HulkMeyer"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+# pizza Assignment Description
+* For this assignment, name you R file pizza.R
+  * For all questions you should load tidyverse.  You should not need to use any other libraries.
+  * Load tidyverse with:
+    **suppressPackageStartupMessages(library(tidyverse))**
+* Download the pizza.csv file from Brightspace and place it in the same folder/directory as your script file.  Then in RStudio, set your working Directory to your Source File Location:
+* Load the pizza.csv file like this:
+    **pizza <- read_csv("pizza.csv")**
+* Round all float/dbl values to two decimal places.
+  * If your rounding does not work the way you expect, convert the tibble to a dataframe b using as.data.frame()
+* All statistics should be run with variables in the order I state
+  * Run a regression predicting mileage from mpg, make and type would be:
+    ** lm(mileage ~ mpg + make + type ...)**
+* In each of these you must atleast use two dplyr functions.  you may use Google to look up how to do certain aspects. 
+
+
+## Setting up packages and data set
+```{r message=FALSE, warning=FALSE}
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(psych))
+pizza <- read_csv("pizza.csv")
+```
+## Taking a look at the data
+```{r}
+psych::describe(pizza)
+summary(pizza)
+head(pizza)
+pizza
+```
+## Problem 1
+Create a tibble containing driver names of instances where free_wine=1, discount_customer = 1, and the order contained more than 4 pizzas
+  (There will be repeated names)
+  * Assign the tibble to Q1.
+  * The list portion of your answer (which CodeGrade will b looking at) should look something like this:
+```{r}
+Q1 <- pizza %>%
+  filter(free_wine == 1 & discount_customer == 1 & pizzas > 4) %>%
+  select(driver) %>%
+  as.data.frame()
+
+Q1
+```
+## Problem 2
+Create a variable name ratio that is the ratio of bill to pizza, called ratio.  What is the mean of that value (call the value mean_ratio)?
+* Your answer should be a 1x1 dataframe.  Assign this to Q2
+```{r}
+Q2 <- pizza %>%
+  mutate(ratio = bill/pizzas) %>%
+  summarise(mean_ratio = round(mean(ratio),2)) %>%
+  as.data.frame()
+
+Q2
+```
+## Problem 3
+For each day of the week, what is the variance in pizzas?
+* The created values should be called var_pizzas
+* The answer should be a dataframe assigned to Q3
+```{r}
+Q3 <- pizza %>%
+  group_by(day) %>%
+  summarise(var_pizzas = round(var(pizzas),2)) %>%
+  as.data.frame()
+
+Q3
+```
+## Problem 4
+Which operator had the higher average bill?
+* The answer should be a tibble assigned to Q4
+```{r}
+Q4 <- pizza %>%
+  group_by(operator) %>%
+  summarise(avg_bill = round(var(bill),2)) %>%
+  arrange(desc(avg_bill)) %>%
+  select(operator) %>%
+  head(1)
+  
+
+Q4
+```
+## Problem 5
+What was the highest amount of free wine given by day/driver combination?
+(For instance, Friday Bruno was 13, while Wednesday Salvator was 12)
+* The asnwer should be a tibble assigned to Q5.
+```{r}
+Q5 <- pizza %>%
+  select(day, driver, free_wine) %>%
+  group_by(day, driver) %>%
+  summarise(n = as.integer(sum(free_wine))) %>%
+  arrange(desc(n)) %>%
+  head(1)
+  
+Q5
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,106 @@
+---
+title: "msleepStats Assignment Description and Building"
+author: "HulkMeyer"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+Load Packages
+```{r}
+suppressPackageStartupMessages(library(lm.beta))
+suppressPackageStartupMessages(library(tidyverse))
+```
+The actual data set is called *msleep*
+
+Round all float/dbl values to two decimal places unless otherwise specified
+All statistics should be run with variables in th order stated
+
+Pull up data
+```{r}
+summary(msleep)
+```
+```{r}
+describe(msleep)
+```
+
+## Problem 1
+Run cor.test() for the relationship between total sleep and body weight values
+* The answer should be assigned to Q1.  Do not round.  Don't worry if you have more decimal places than you see listed in CodeGrade's expected output.  CodeGrade will account for that. 
+```{r}
+Q1 <- cor.test(msleep$sleep_total, msleep$bodywt)
+Q1
+```
+
+## Problem 2
+Create a correlation matrix for the relations among total sleep, rem sleep, brain weight, and body weight.
+* Make sure to remove missing values
+* The matrix should be assigned to Q2
+```{r}
+sleep_sub <- msleep %>%
+  select(sleep_total, sleep_rem, brainwt, bodywt) %>%
+  drop_na()
+Q2 <- round(cor(sleep_sub),2)
+Q2
+```
+
+#Problem 3
+Run a regression predicting body weight by vore
+* Assing the coefficients of the model to Q3
+```{r}
+Q3 <- reg_body.vore <- lm(bodywt ~ vore , msleep)
+Q3
+```
+
+# Problem 4
+Create a regression predicting bodywt by vore and REM sleep.  Compare to the model in Q3, which one has the better AIC?
+* Assign the better AIC value to Q4
+```{r}
+reg_body.vore.rem <- lm(bodywt ~ vore + sleep_rem , msleep)
+sum1 <- summary(reg_body.vore)
+sum2 <- summary(reg_body.vore.rem)
+```
+```{r}
+AIC(reg_body.vore, k=1)
+```
+```{r}
+AIC(reg_body.vore.rem, k=2)
+```
+
+# Problem 5
+Create a logistic regression predicting whether or not an animal is a carnivore or herbivore based on sleep total.
+* You'll need to filter out omnivores and insectivores:
+* You will need to use the following code to create the variable you are predicting:
+    **mutate(vorebin = ifelse(vore == 'carni',0,1))
+* Do not round these values.
+* Do not use $ notation to reference the variables in the glm() function call, instead use the data = parameter.
+* Assign the model to Q5
+```{r}
+sleep_log_reg <- msleep %>%
+  select(vore, sleep_total) %>%
+  filter(vore != 'omni' & vore != 'insecti') %>%
+  mutate(vorebin = ifelse(vore == 'carni',0,1)) %>%
+  drop_na()
+log_reg1 <- glm(vorebin ~ sleep_total, binomial(), sleep_log_reg)
+Q5 <- log_reg1
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

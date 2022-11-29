@@ -1,0 +1,142 @@
+---
+title: "nycflights13stats Assignment Description and Building"
+author: "HulkMeyer"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r message=TRUE, warning=TRUE}
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(nycflights13))
+suppressPackageStartupMessages(library(psych))
+suppressPackageStartupMessages(library(lm.beta))
+```
+The actual data set is called flights.
+*See the nycflights13 package page and chapter 5 from the textbook for more info.
+Round all float/dbl values to two decimal places.
+*If your rounding does not work the way you expect, convert the tibble to a dataframe by using as.data.frame()
+All statistics should be run with variables in the order I state
+*E.g., “Run a regression predicting mileage from mpg, make, and type” would be: lm(mileage ~ mpg + make + type...)
+```{r}
+describe(flights)
+```
+Creating the data set that is outlined 
+```{r}
+flights_df <- as.data.frame(flights)
+```
+
+## Problem 1
+Address the outliers for departure delay as described in the outliers lectures.  You'll want to create a ne dataset without outliers for use in Q2-5.  What percentage of data remains following the removal of these outliers?
+* The answer should be assigned to Q1
+
+Begin looking for outliers
+```{r}
+summary(flights_df)
+```
+```{r}
+ggplot(flights_df) +
+  geom_boxplot(mapping = aes(dep_delay))
+```
+```{r}
+ggplot(flights_df) +
+  geom_histogram(mapping = aes(x=dep_delay), binwidth = 0.50) +
+  coord_cartesian(ylim = c(0, 100))
+```
+Begin Refining the Data set
+* Identify Upper and Lower Quartiles
+```{r}
+flights_upper <- quantile(flights_df$dep_delay, .9985, na.rm = TRUE)
+flights_lower <- quantile(flights_df$dep_delay, .0015, na.rm = TRUE)
+cat('Flights Upper Quartile = ', flights_upper, ' & ', 'Flights Lower Quartile = ', flights_lower)
+```
+WHat are the Outliers
+```{r}
+flights_out <- which(flights_df$dep_delay > flights_upper | flights_df$dep_delay < flights_lower)
+```
+Pulling out the Outliers
+```{r}
+flights_df_no_out <- flights_df[-flights_out,]
+```
+Percentage of original remaining
+```{r}
+Q1 <- round((nrow(flights_df) - length(flights_out))/ nrow(flights_df)*100,2)
+Q1
+```
+#### This was Correct so we can more forward using -> flights_df_no_out
+
+## Problem 2
+Run cor.test for the relationship between departure delay and distance. 
+  * Assign the results of the cor.test() function to Q2.  Do not round
+```{r}
+Q2 <- cor.test(flights_df_no_out$dep_delay, flights_df_no_out$distance)
+Q2
+```
+## Problem 3
+Create a regression predicting departure delay from distance.  
+* The summary of the model should be assigned to Q3.  Do not round
+##### Note: CodeGrade will be grading you based on the last two lines of the summary output
+```{r}
+reg_flights <- lm(flights_df_no_out$dep_delay ~ flights_df_no_out$distance, data = flights_df_no_out)
+Q3 <- summary(reg_flights)
+Q3
+```
+
+## Problem 4
+Calculate standardized regression coefficients with lm.beta for the regression from Q3.
+* Assign the results of lm.beta() to Q4. Do not round. 
+```{r}
+Q4 <- lm.beta(reg_flights)
+Q4
+```
+
+## Problem 5
+Create another regression, this time adding carrier as a predictor to the regression from Q3
+* The summary of the model should be assigned to Q5. Do not Round
+* Note: If you use a different method of removing outliers (see Q1) than what Dr. Longo uses in his videos you risk upsetting CodeGrade
+* Note: CodeGrade will be grading you based on the last two lines of the summary output
+```{r}
+reg_flights2 <- lm(flights_df_no_out$dep_delay ~ flights_df_no_out$distance + flights_df_no_out$carrier, data = flights_df_no_out)
+Q5 <- summary(reg_flights2)
+Q5
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

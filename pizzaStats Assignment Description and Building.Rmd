@@ -1,0 +1,132 @@
+---
+title: "pizzaStats Assignment Description and Building"
+author: "HulkMeyer"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+Loading packages
+```{r message=FALSE, warning=FALSE}
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(lm.beta))
+pizza <- read_csv('pizza.csv')
+```
+
+Round all float/dbl values to two decimal places unless otherwise specificed.
+
+All statistics should be run with variables in the order stated
+
+### Looking at the Data
+```{r}
+head(pizza)
+```
+```{r}
+summary(pizza)
+```
+```{r}
+library(Hmisc)
+describe(pizza)
+```
+
+
+## Problem 1
+Create a correlation matrix for temperature, bill, pizzas and got_wine
+* Assign the Matrix to Q1
+```{r}
+pizza_sub1 <- pizza %>%
+  select(temperature, bill, pizzas, got_wine)
+#create correlation matrix
+Q1 <- round(cor(pizza_sub1),2)
+Q1
+```
+
+## Problem 2
+Create a correlation matrix of the relationships between time, temperature, bill and pizzas for Laura in the East branch
+*Assign the matrix to Q2
+```{r}
+pizza_sub2 <- pizza %>%
+  filter(operator == 'Laura' & branch == 'East') %>%
+  select(time, temperature, bill, pizzas)
+Q2 <- round(cor(pizza_sub2),2)
+Q2
+  
+```
+
+## Problem 3
+Run a regression predicting whether or not wine was ordered from temperature, bill, and pizza.
+* Assign the coefficients of the summary of the model to Q3. 
+```{r}
+#make data set
+pizza_sub3 <- pizza %>%
+  select(got_wine, temperature, bill, pizzas)
+# run regression 
+pizza_sub3_reg <- glm(got_wine ~ temperature + bill + pizzas, binomial(), pizza_sub3)
+sum_pizza_sub3_reg <- summary(pizza_sub3_reg)
+#assign coefficients
+Q3 <- round(sum_pizza_sub3_reg$coefficients,2)
+```
+
+## Problem 4
+Run a regression predicting bill from temperature, pizzas and got_wine.
+* Assign the standardized regression coefficients to Q4 by using the lm.beta() function. 
+* You should not round these values
+```{r}
+#build data set
+pizza_sub4 <- pizza %>%
+  select(bill, temperature, pizzas, got_wine)
+# multi regression
+pizza_sub4_reg <- lm(bill ~ temperature + pizzas + got_wine, pizza_sub4)
+# standardize
+pizza_sub4_stdreg <- lm.beta(pizza_sub4_reg)
+Q4 <- pizza_sub4_stdreg
+
+```
+
+## Problem 5
+Add operator to the regression from Q4.  Which is the better model?
+* Assign the better AIC to Q5
+* Use the classical AIC (k=2)
+```{r}
+#build data set
+pizza_sub5 <- pizza %>%
+  select(bill, temperature, pizzas, got_wine, operator)
+# multi regression
+pizza_sub5_reg <- lm(bill ~ temperature + pizzas + got_wine + operator, pizza_sub5)
+sub5_AIC <- AIC(pizza_sub5_reg, k=2)
+sub4_AIC <- AIC(pizza_sub4_reg, k=2)
+Q5 <- sub4_AIC
+print(sub4_AIC)
+print('--------------------')
+print(sub5_AIC)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
