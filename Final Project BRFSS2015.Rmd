@@ -1,0 +1,243 @@
+---
+title: "Final Project BRFSS2015"
+author: "HulkMeyer"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+Load Libraries
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+library(carat)
+library(Hmisc)
+library(olsrr)
+library(psych)
+library(lsr)
+```
+Load csv file
+```{r}
+data <- read.csv('BRFSS2015_650.csv')
+```
+Round all float/dbl values to two decimal places. 
+All statistics should be run with variables in the order stated
+The answer to each question should be assigned to the value before the colon. For example, the answer to the first question should be assigned to Q1. 
+Use plenty of comments throughout your code so that the grader can follow your line of thinking. 
+## Getting started by looking at the data
+```{r}
+head(data)
+```
+```{r}
+describe(data)
+```
+```{r}
+summary(data)
+```
+## Problem 1
+How many people reported their general health is excellent
+```{r}
+Q1 <- sum(data$GENHLTH == 1, na.rm = TRUE)
+#PDF Page 13 states question and shows results as well as the scale where 1 is equated with excellent health
+Q1
+```
+## Problem 2
+What is the highest value for number of adult women in household where someone has ever had a stroke?  Summarise the value in a variable called **max_numwomen**
+```{r}
+max.numwomen <- data %>%
+  select(NUMWOMEN, CVDSTRK3) %>%
+  arrange(CVDSTRK3, desc(round(NUMWOMEN))) %>%
+  filter(CVDSTRK3 == 1 & NUMWOMEN >= 0) %>%
+  summarise(max_numwomen = max(NUMWOMEN))
+max.numwomen
+```
+
+## Problem 3
+Compute the means and standard deviations for **MENTHLTH** comparing caregivers who managed personal care such as giving medications, feeding, dressing, or bathing and those who did not.  The output should be a data frame.  
+```{r}
+mean_std_caregivers <- data %>%
+  filter(CRGVPERS == 1 | CRGVPERS == 2) %>%
+  select(CRGVPERS, MENTHLTH) %>%
+  group_by(CRGVPERS) %>%
+  na.omit() %>%
+  summarise(mean_health = mean(MENTHLTH), sd_health = sd(MENTHLTH))
+
+Q3 <- round(as.data.frame(mean_std_caregivers),2)
+Q3
+```
+
+# Problem 4
+What is the median age when respondents were told they had diabetes for those living in Pennsylvania?  Only calculate it for those who gave an age.  The value should be called **med.diab.age** and be in a 1 x 1 dataframe.
+```{r}
+med_diab_age <- data %>%
+  select(X_STATE, DIABAGE2) %>%
+  filter(X_STATE == 42 & DIABAGE2 <= 97) %>%
+  na.omit() %>%
+  summarise(med.diab.age = median(DIABAGE2))
+ med_diab_age
+
+```
+
+## Problem 5
+Predict number of days in the past 30 days mental health was not good from martial status.  Assign the summary of the model to Q5
+Mental health variable = menthlth
+Marital Status variable = marital
+```{r}
+Menhlth_marital <- data %>%
+  select(MENTHLTH, MARITAL) %>%
+  filter(MENTHLTH <= 30 & MARITAL <= 6)
+Menhlth_marital_reg <- lm(MENTHLTH ~ MARITAL, Menhlth_marital)
+Q5 <- summary(Menhlth_marital_reg)
+Q5
+  
+```
+
+## Problem 6
+Use **summarise** to compare the mean number of days in the past 30 days mental health was not good by marital status and assign to Q6 as a dataframe.  Round to two decimals.  The mean should be called **mean_mental**.  You should be able to confirm the results of Q5 after creating this.
+```{r}
+Menhlth_marital2 <- data %>%
+  select(MENTHLTH, MARITAL) %>%
+  filter(MENTHLTH <= 30 & MARITAL <= 6) %>%
+# above is the same as from problem 5 explanations
+  group_by(MARITAL) %>%
+  summarise(mean_mental = mean(MENTHLTH))
+round(Menhlth_marital2,2)
+```
+
+## Problem 7
+Calculate the means and standard deviations of **MENTHLTH** for those who have had a stroke and those who have not had a stroke only for those who do not have any kind of healthcare coverage.  The output should be a dataframe assigned to Q7, and be formatted as shown.
+```{r}
+no_hlthins_stroke_mental <- data %>%
+  filter(HLTHPLN1 == 2 & CVDSTRK3 <= 2) %>%
+  select(CVDSTRK3, MENTHLTH) %>%
+  group_by(CVDSTRK3) %>%
+  summarise(mean_mental = mean(MENTHLTH), sd_mental = sd(MENTHLTH))
+round(as.data.frame(no_hlthins_stroke_mental,2))
+```
+
+## Problem 8
+Run an ANOVA comparing how many times per week respondents took part in the exercise they spent the most time doing in the past month by marital status, and assign the TukeyHSD post-hoc test to Q8
+*You may need to look up how to do this in R
+```{r}
+exerperweek_marital <- data %>%
+  filter(MARITAL <= 6 & EXEROFT1 <= 199) %>%
+  select(EXEROFT1, MARITAL) 
+exerperweek_marital.ANOVA <- aov(EXEROFT1 ~ factor(MARITAL), data = exerperweek_marital)
+Q8 <- TukeyHSD(exerperweek_marital.ANOVA)
+Q8
+
+```
+
+## Problem 9
+Calculate the variance in number of days a respondent drank alcohol in the past week for each type of physical activity or exercise spend in the past month for men.
+* **Pay Special attention to how values are coded in the Codebook**
+  * Arrange in descending order, and include only the six with the highest variance in drinks.
+  * The output should be a 6X2 Dataframe, Round to two decimals
+```{r}
+drink_exercise_var <- data %>%
+  filter(SEX == 1) %>%
+  select(ALCDAY5, EXRACT11) %>%
+  group_by(EXRACT11) %>%
+  summarise(var.drinks = var(ALCDAY5)) %>%
+  arrange(desc(var.drinks)) %>%
+  head(6)
+Q9 <- round(as.data.frame(drink_exercise_var),2)
+Q9
+```
+
+# Part 2 - Final Section
+You will choose four variables to explore in ways we have not to complete the following:
+  ** Variables used VETERAN3, MENTHLTH, MARITAL, EXRACT11
+
+## Problem 10
+Address the values of any variables for instance is "none' equal to a value other than 0?  are there extra decimals implied
+```{r}
+final_data <- data %>%
+  select(VETERAN3, MENTHLTH, MARITAL, EXRACT11) %>%
+  na.omit(EXRACT11) %>% #Removing none or NA responses
+  filter(MENTHLTH != 88 | MARITAL != 9) #Removing None and Refused Responses
+final_data
+```
+
+
+
+## Problem 11
+Remove any outliers. Briefly explain why you chose the method you used.  make sure to comment it out. 
+```{r}
+final_data_no_out <- final_data %>%
+  filter(VETERAN3 <=2) %>%
+      #Removing all responses greater than 2, From visualizations there looks to be an outlier at 7 which is the I don't know response.
+  filter(MENTHLTH <= 30) %>%
+      #Removing Refused(99), Don't know/ Not sure(77) responses from data set to allow for more reliable data to be collected since highest number of days a subjects mental health could be not good is 30
+  filter(MARITAL <= 6) %>%
+      #Removing all values except the 1-6 as those are the relationship classification that were measured
+  filter(EXRACT11 != 99 | EXRACT11 != 77) %>%
+      #Removing values for Don't know and Refused from the exercise variable
+  filter(EXRACT11 <= 98)
+      #Came back and added this as still had some 99 values showing up when I did the visualizations
+        #This took care of the issue. Did not do it initially as the 98 Value is for Other forms of exercise that are not listed
+final_data_no_out
+```
+
+
+
+## Problme 12
+Complete exploratory analysis doing appropriate visualizations with ggplot2.
+```{r}
+ggplot(final_data_no_out) +
+  geom_boxplot(mapping = aes(VETERAN3))
+ggplot(final_data_no_out) +
+  geom_histogram(mapping = aes(x=VETERAN3), binwidth = 1)
+```
+```{r}
+ggplot(final_data_no_out) +
+  geom_boxplot(mapping = aes(MENTHLTH))
+ggplot(final_data_no_out) +
+  geom_histogram(mapping = aes(x=MENTHLTH), binwidth = 1)
+```
+```{r}
+ggplot(final_data_no_out) +
+  geom_boxplot(mapping = aes(MARITAL))
+ggplot(final_data_no_out) +
+  geom_histogram(mapping = aes(x=MARITAL), binwidth = 1)
+```
+
+```{r}
+ggplot(final_data_no_out) +
+  geom_boxplot(mapping = aes(EXRACT11))
+ggplot(final_data_no_out) +
+  geom_histogram(mapping = aes(x=EXRACT11), binwidth = 1)
+
+```
+
+## Problem 13
+Run basic descriptive statistics
+```{r}
+head(final_data_no_out,10)
+  # get to look at the raw data, but honestly would not have run this due to how I went about refining the data set
+summary(final_data_no_out)
+  # Like this to get a quick view of the data
+describe(final_data_no_out)
+  # More indepth view of the data and I like this because of how much I get from it.  Does get overwhelming with the large data set we worked with starting out. 
+```
+
+
+
+
+## Problem 14
+Finally run an Appropriate regression predicting one of those variables.  Identify the best model.
+```{r}
+final_data_no_out_bi <- final_data_no_out %>%
+  mutate(VETERAN3 = ifelse(VETERAN3 == 2 ,0,1)) #made the Veteran parameter binomial with 0,1.  Now 0 is NOT VETERAN and 1 is VETERAN
+final_data_multi_reg <- lm( MENTHLTH ~ VETERAN3 + MARITAL + EXRACT11, data = final_data_no_out_bi)
+#summary(final_data_multi_reg)
+  # Shows that all predictors are significant
+  # Look at the correlations between the variables
+#cor(final_data_no_out_bi)
+all_final_data_models <- ols_step_all_possible(final_data_multi_reg)
+  #all_final_data_models shoes that final_data_multi_reg is best by R-Square and Adj.R-Square
+AIC(final_data_multi_reg)
+  #631304.1
+final_data_multi_reg2 <- lm( MENTHLTH ~ MARITAL + EXRACT11, data = final_data_no_out_bi) # second highest R and Adj. R from the all_final_data_model
+#summary(final_data_multi_reg2)
+AIC(final_data_multi_reg2)
+  #631549.5
+Q14 <- final_data_multi_reg
+```
