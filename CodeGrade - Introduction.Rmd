@@ -1,0 +1,100 @@
+---
+title: 'CodeGrade: Intro'
+author: "HulkMeyer"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+# CodeGrade Creation
+Submit an R script file
+
+Write programs in Markdown file and move code to R Script file. 
+
+When running your code
+  Loading packages use suppress to stop the loading packages output.  It will throw off CodeGrade
+          suppressPackageStartupMessages("""put library(package)here""")
+  Similarly, when you load CSVs do the same thing for same reason
+          suppressMessages('''read_csv(csv file name)""")
+          
+Recommended psych package to gain access to the describe function
+```{r}
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(psych))
+      #contains the describe function - for looking at your data
+```
+Use the describe function and what it gives you
+```{r}
+data("sleep")
+summary(sleep)
+```
+```{r}
+describe(sleep)
+```
+There is also a describe in Hmisc that looks very different
+```{r warning=FALSE}
+library(Hmisc)
+describe(sleep)
+```
+If loaded both psych and Hmisc and  you want to use one or the other describe you would reference the package and then the function like so
+package::fuction
+```{r}
+psych::describe(sleep)
+```
+Pizza Assignment - Don't have anything print automatically CodeGrade will command what it wants printed
+
+Q1 <- pizza %>%
+  group_by(date) %>%
+  summarise(mean_pizza = mean(pizzas), .groups = 'drops') %>%
+  arrange(desc(mean_pizza)) %>%
+  select(date) %>%
+  head(1)
+  
+Q2 <- pizza %>%
+  mutate(hot = ifelse(temperature >= 72, 'Warm', 'Cool')) %V%
+  group_by(hot) %>%
+  summarise(mean_bill = mean(bill, na.rm=TRUE), .group = 'drop')
+
+Q3 <- pizza %>%
+  group_by(free_wine == 1) %>%
+  summarise(sd_bill = sd(bill, na.rm = TRUE), .groups = 'drop') %>%
+  arrange(desc(sd_bill))
+  
+Q4 <- pizza %>%
+  mutate(ratio = bill/pizza) %>%
+  group_by(operator, branch) %>%
+  summarise(median_ratio = median(ratio, narm = TRUE),
+    var_ratio = var(ratio, na.rm=TRUE), .groups = 'drop') %>%
+  arrange(median_ratio)
+  
+Q5 <- pizza %>%
+  filter(got_wine == 1, temerature < 70) %>%
+  group_by(driver, branch, operator) %>%
+  summarise(var_bill = var(bill, na.rm = TRUE),
+    n=n(), .groups = 'drop') %>%
+  filter(n >= 10) %>%
+  arrange(desc(var_bill)) %>%
+  select(driver, branch, operator) %>%
+  head(1)
+  
+# A Note about Rscript from the command line
+
+# CodeGrade Example
+
+# CodeGrade Errors
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

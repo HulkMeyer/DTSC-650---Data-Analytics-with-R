@@ -1,0 +1,450 @@
+---
+title: "Module 7 - Linear Regression"
+author: "HulkMeyer"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+# Module 7 - Linear Regression
+
+## Regression Review
+
+### Regression Basics
+Built on correlation
+* Idea: Take it further and now say we're trying to predict one or he variables
+  * Remember, correlation =/= causation
+
+Goals:
+  * Determine best model of data
+  * Use model to predict future outcomes
+    * You could collect data on amount of exercise and cardiovascular health
+    * Use your data to model the relationship
+    * That model provides an equation, and can have any value of exercise entered to predict health
+
+In Regression, we can use IV/DV language: we are implying causalityy
+
+Different types of regression
+  * Simple: One predictor predicting an outcome
+  * Multiple: Multiple predictors predicting an outcome
+  * Multivariate: Multiple outcomes
+  * Logistic: Outcome is binary
+  * Polynomil: Modle is nonlinear
+  * Others, too
+  
+### Models
+
+Before we said that our general form of models is: 
+  outcome =(model) + error
+
+We're predictng a specific value for specific person base on our model
+  * Error admits our model isn't going to be perfect
+  *  Outcome and error are for individual, model is the same across individuals
+
+We want the best model, and in regression we use least squares regression
+
+We're inth land of linear regression
+  * Ourline consists of two things: slope and interept
+    * Slope = bi
+    * Intercept = b0
+  * These bs are referred to as regression coefficients
+    * You'll see b, bi or Beta
+
+The general equation:
+  Y = b0 + bixi +ei
+However, we generally don't include it
+  Y = b0 + bixi
+
+### Least Squares
+
+Least squares is the method of finding the best line for your data
+  * It finds the line that has...the least squared errors
+  
+If you calculated the sum o squared differences for each possible line, the one we obtain would bethe smallest. 
+
+We usethis because this i the best model for our data -  its the least wrong
+  * You might be able to find one better that's nonlinear,but that's a different lecture
+
+We saw that we an calculate total sum of squares by looking at the mean relative to each observation
+  * This is the total amount of difference between the most basic model ad our data
+
+We now have the new sum of squares: The residual sum of Squares, SSr
+ * This is one way to quantify how good our mode is
+  * Obviously we want th lowest SSr
+
+
+Now that we have the total sum of squares and the resiual, we can calculate how much our model has accounted for
+  * This is SSm, or model sum of squares
+  
+R^2, the amount of variance explained in one variable from another, is calculate using these values:
+  R^2 = (SSm) / (SSt)
+
+We can also assess our model with and F-test
+  * Instead of looking at total and model sum of squares, now we'll look at means
+    F = (MSm) / (MSr)
+    
+This gives us a ratio of how much our model accounts for relative to how much it doesn't
+  * The bigger it is, the better
+
+We'll get into this more in the weeks to come
+
+## Regression in Action
+```{r}
+#Loading the dataset
+album1 <- read.delim("Album Sales 1.dat", header = TRUE)
+album1
+```
+```{r}
+summary(album1)
+```
+```{r}
+# Create table for each variable and look at correlation
+adv <- album1$adverts
+sales <- album1$sales
+cor(album1)
+```
+To run regression, we us the **lm()** function
+  model <- lm(outome - predictor(s), data = df)
+
+Its helpful to assign the output to an objectt
+```{r}
+albumSales.1 <- lm(album1$sales ~ album1$adverts, data = album1) #syntax if we had not built a able for sales and adverts above
+albumSales.1 <- lm(sales ~ adv) #syntax to use since made smaller tables
+```
+You can vew the model usig summary()
+```{r}
+summary(albumSales.1)
+```
+### Interpretation!!!
+
+How do we interpret this?
+* We're not to concerned with the residuals (right now)
+* The overall fit of the model is at the bottom
+* The F-statistic, df and corresponding p-alue indicate overal significance - This is an omnibus test, so we need to look to each predictor to see if they're signifiant
+*  Multiple ad Adjucted R-squared describe amountof variance predictors account for - In single-predicotr regression, multiple R-squared is the correlation squared
+```{r}
+cor(adv, sales)^2
+```
+* Coefficients are the heart of the model
+* Intercept is th value of the model assuming x1 = 0
+* All predictors will follow
+* Estimates provide the b values
+* Std.Error, t-values, and Pr tell you if the predictor is significant - As do the stars (if they're there)
+* To generate the regression equation, plug the estimates in to your equation
+
+```{r}
+albumSales.1$coefficients
+```
+
+## Regression Interpretation
+
+* iNTERPRETING THE REGRESSION EQUATION
+  * Now that we've created our regression equation, what does it mean?
+  
+```{r}
+print(sales[1])
+print(adv[1])
+print(albumSales.1$residuals[1])
+```
+```{r}
+b0 <- albumSales.1$coefficients[1]
+b1 <- albumSales.1$coefficients[2]
+adv1 <- adv[1]
+e1 <- albumSales.1$residuals[1]
+print(b0 + b1*adv1 +e1)
+# we would expect this to equal 330 since that is what sales[1] is equal to
+```
+How do we get the coefficients?
+    This is the programing way to do it. 
+```{r}
+album1_xminxb <- album1$adverts-mean(album1$adverts)
+album1_yminyb <- album1$sales-mean(album1$sales)
+album1_prodxy <- album1_xminxb*album1_yminyb
+sumprob <- sum(album1_prodxy)
+album1_xminxbsq <- album1_xminxb**2
+sumsqx <- sum(album1_xminxbsq)
+b1 <- sumprob / sumsqx
+print(b1)
+```
+Find b0
+```{r}
+b0 <- mean(album1$sales) - b1*mean(album1$adverts)
+print(b0)
+```
+b1 = cor(xy) * [sd(x) / sd(y)]
+```{r}
+cor_xy <- cor(adv, sales)
+sd_y <- sd(adv)
+sd_x <- sd(sales)
+print(cor_xy * (sd_x / sd_y))
+```
+
+## Multiple Regression
+
+An Example
+You're interested in discovering how professor salary is influenced by years as a professor and number of publications
+```{r}
+time <- c(3,6,3,8,9,6,16,10,2,5,5,6,7,11,18)
+pub <- c(18,3,2,17,11,6,38,48,9,22,30,21,10,27,37)
+salary <- c(51876,54511,53425,61863,52926,47034,66432,61100,41934,47454,49832,47047,39115,59677,61458)
+Salary <- data.frame(time, pub, salary)
+Salary
+```
+
+```{r message=FALSE}
+library(plotly)
+plot <- plot_ly(Salary, x = pub, y = time, z = salary, marker=list(color = ~salary), showscale=TRUE)
+plot <- plot %>% 
+  layout(scene = list (xaxis = list (title = 'Publications'),
+                      yaxis = list (title = 'Time'),
+                      zaxis = list (title = 'Salary')))
+plot
+```
+Lets look at the single predictors 
+```{r}
+salaryvspubs <- lm(salary~pub, Salary)
+summary(salaryvspubs)
+```
+```{r}
+salaryvstime <- lm(salary ~ time, Salary)
+summary(salaryvstime)
+```
+```{r}
+salaryfullmodel <- lm(salary ~ pub + time, Salary)
+summary(salaryfullmodel)
+```
+adding another variable to a model that has already been created
+  * Question can one be reduced out in a similar fashion?
+```{r}
+salaryfullmodel2 <- update(salaryvstime, .~. + pub)
+summary(salaryfullmodel2)
+```
+What is the takeaway?
+Correlation tables are huge, it is possible to get an idea of what will happen if you look at a correlation table
+```{r}
+round(cor(Salary),2)
+```
+Because Time and Pub are highly correlated with Salary, but are also highly correlated with each other.  This can let us know that they may have some overlap in what they are measuring.  Which is why when we ran the regression together we see only one variable as significant and the other is not. 
+
+## Standardized Regression Coefficients
+
+This is good! but one issue is in scale
+Lets say you have the following regression equation, and assume each coefficient is equally significant
+Y = 43082.39 + 982.87*(years) + 121.80*(publications)
+Which is the stronger predictor?  comparing years and publications is like comparing oranges and tangerines
+```{r}
+library(lm.beta)
+lm.beta(salaryfullmodel)
+```
+This will let us compare across units.  
+
+## Multiple Regression Example
+
+
+
+
+Lets check out another example
+```{r}
+album2 <- read.delim('Album Sales 2.dat', header = TRUE)
+```
+We have four variables
+* Sales: sales of each album in the week after it's release
+* Adverts: amount in thousands spent on advertising before release
+* Airplay: number of times songs from the album are played on the radio during the week prior to release
+* Attract: attractiveness of the band
+
+```{r}
+library(DT)
+datatable(album2)
+```
+```{r}
+round(cor(album2),2)
+```
+What do we expect from these correlations
+```{r}
+albumSales.2 <- lm(sales ~ adverts + airplay + attract, data = album2)
+summary(albumSales.2)
+```
+```{r}
+lm.beta(albumSales.2)
+```
+
+## Model Fit
+Adjusted R squared is nice, but its overly simplistic: when you add more predictors, it goes up
+
+#### The Akaike information criterion **(AIC)** is more nuanced and is the gold standard of adjusted meausres of fit
+
+AIC = n * ln(SSe / n) + 2*k
+* n = number of observations
+SSe is the same sum of squares errors
+k = number of predictors
+
+```{r}
+summary(albumSales.2)
+```
+```{r}
+AIC(albumSales.1, k=1)
+```
+```{r}
+AIC(albumSales.2, k=3)
+```
+**Generally the model with the best fit will have the lowest AIC** but you can't compare them across models.  
+  * When using this for comparison between models, the models must be based on
+    * same data set using similar or the same variables
+    
+#### The Bayesian information criterion (BIC) is another commonly used measure of fit
+  given by the equation
+  BIC = ln(n)*k - 2*ln(L_hat)
+  * Where L_hat = maximum value of likelyhood function
+
+This is **way** beyond the scope of this class - but you **might** see it in tandem with AIC
+```{r}
+BIC(albumSales.2)
+```
+To assess model fit we should look at 
+  * Multiple R-squared
+  * Adjusted R-squared
+  * AIC
+  * BIC
+  * Model P-value
+These are in combination (model fit is more art than science in this area) - each is a piece to the puzzle
+  * AIC is however the gold standard and should be given a little more weight, but again more art than science
+
+## Methods of regression Part 1
+
+This is related to a **huge** issue: how to create a model
+* How do you choose which variables to include?
+* How do you choose which variables to take out?
+* Should you use dimension reduction techniques?
+
+You don't need to know all of the information here, but you should be able to answer:
+  1.) What are the different types of methods?
+  2.) What are their relative strengths?
+  3.) Why do you need different types?
+  
+### Forced Entry
+All predictors are added to the model stance
+
+### Hierarchical Regression
+Predictors are entered one-by-one, in order by which would theoretically be most important
+Models are then compared using ANOVA
+
+```{r}
+albumsales.a <- lm(sales ~ adverts, data = album2)
+albumsales.b <- lm(sales ~ adverts + airplay, data = album2)
+albumsales.c <- lm(sales ~ adverts + airplay + attract, data = album2)
+```
+Now lets compare the models by running an ANOVA on each of them
+```{r}
+datatable(anova(albumsales.a, albumsales.b, albumsales.c))
+```
+```{r}
+print(summary(albumsales.a))
+print('_________________________________________________________________________________________')
+print(summary(albumsales.b))
+print('_________________________________________________________________________________________')
+print(summary(albumsales.c))
+```
+### Another options
+Changing the order that the variables were added
+```{r}
+albumsales.d <- lm(sales ~ airplay, data = album2)
+albumsales.e <- lm(sales ~ airplay + attract, data = album2)
+albumsales.f <- lm(sales ~ airplay + attract + adverts, data = album2)
+datatable(anova(albumsales.d, albumsales.e, albumsales.f))
+```
+
+### Stepwise
+Predictors are added to the model based in which is the better predictor mathematically
+
+The process is this:
+* Initially the model generates b0
+* Then it finds the predictor with the strongest correlation
+* Then it finds the predictor with the largest semi-partial correlation with the outcome
+  * We already have a percentage of variance accounted fro, the second predictor needs to be the best at predicting the remainign variance, not the overall variance
+* The addition continues until there AIC is no longer lowered
+
+There is debate as to whether thsi should be done
+
+Regardless...
+
+* This is based purely on the math, there is no theoretical component.  
+    * This is not a great method 
+
+## Methods of Regression Part 2
+
+### All Subsets
+One of the biggest problems with stepwise regression is that fit depends on what other variables were in the model
+ 
+All subsets tests all combinations of variables to see what gives the best fit
+* olsrr library
+```{r message=FALSE}
+library(olsrr)
+allModel <- ols_step_all_possible(albumSales.2)
+allModel
+```
+```{r message=FALSE, warning=FALSE}
+plot(allModel)
+#from olsrr package
+```
+
+## Calculating Multiple Regression Equation
+Y12 = B0y.12 + By1.2 * X1 + By2.1 * X2
+  Where Y12 = predicted value of Y using X1 
+    B0y.12 = constant(often just referred to as B0)
+    By1.2 = partial regression coefficient for y on X1 when including X2 in the equation
+    By2.1 = partial regression coefficient for y on X2 when including X1 in the equation
+    
+How do we get there???
+ 1.) Getting the correlations among all three variables
+ 2.) Calculate standardized regression equations from correlations for By1.2 and By2.1
+ 3.) Convert to orginal units
+ 4.) Find constant
+ 5.) Put it together
+ 
+### Getting the correlations amoung all three variables
+```{r}
+cor(Salary)
+```
+```{r}
+library(psych)
+describe(Salary)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

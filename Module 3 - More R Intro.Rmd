@@ -1,0 +1,424 @@
+---
+title: "Module 3 - More R Intro"
+author: "HulkMeyer"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+# More R Intro
+
+# Basics
+* This opens up a new window with work flow and such. 
+
+# Data Import
+library(tidyverse)
+## contains readr package
+
+# Data Transformation
+library(nycflights)
+
+```{r}
+library(tidyverse)
+library(nycflights13)
+flights
+```
+```{r}
+filter(flights, month ==1, day == 1)
+```
+# Filter
+
+jan1 <- filter(flights, month==1, day==1)
+```{r}
+jan1 <- filter(flights, month==1, day==1)
+jan1
+```
+```{r}
+(dec25 <- filter(flights, month==12, day==25))
+#wrapping whole statement in () will print out so it doesn't need to be called specifically
+```
+#Comparisons
+
+When conducting operations where the difference is extreamely small (think 40th decimal place) use the near function
+```{r}
+sqrt(2)^2 == 2
+```
+```{r}
+near(sqrt(2)^2, 2)
+```
+or see case
+```{r}
+1/49 * 49 == 1
+```
+```{r}
+near(1/49*49,1)
+```
+& <- and function
+| <- or function
+! <- not function
+
+# Missing Values
+
+If you want to determine if a value is missing, use -> is.na()
+```{r}
+head(is.na(flights))
+```
+filter() only includes rows where the condition is TRUE; it excludes boaht FALSE and NA values.  If you want to preserve missing valuse, as for them explicityly:
+-------
+df <- tribble(x = c(1,NA,3))
+filter(df,x>1)
+filter(df, is.na(x) | x>1)
+
+# Textbook Exercises 5.2
+## Find all flights that
+
+### Had an arrival delay of two or more hours
+```{r}
+filter(flights, arr_delay >= 120)
+```
+
+### Flew to Houston (IAH or HOU)
+```{r}
+filter(flights, dest =='IAH' | dest == 'HOU')
+```
+
+### Were operated by United, American, or Delta
+```{r}
+filter(flights, carrier =='AA' | carrier =='DL' | carrier == 'UA')
+```
+
+### Departed in summer (July, August, and September)
+```{r}
+filter(flights, month >= 7, month <= 9)
+```
+
+### Arrived more than two hours late, but didn’t leave late
+```{r}
+filter(flights, arr_delay >120, dep_delay<=0)
+```
+
+### Were delayed by at least an hour, but made up over 30 minutes in flight
+```{r}
+filter(flights, dep_delay >= 60, dep_delay - arr_delay >30)
+```
+
+### Departed between midnight and 6am (inclusive) the previous challenges?
+```{r}
+filter(flights, dep_time <= 600 | dep_time == 2400)
+```
+
+
+### How many flights have a missing dep_time? What other variables are missing? What might these rows represent?
+```{r}
+# from problem (Departed in summer (July, August, and September))
+# can use the between operator to achieve the same in less code
+filter(flights, between(month, 7,9))
+```
+
+### Why is NA ^ 0 not missing? Why is NA | TRUE not missing? Why is FALSE & NA not missing? Can you figure out the general rule?(NA * 0 is a tricky counterexample!)
+```{r}
+filter(flights, is.na(dep_time))
+```
+If the flight never left that could mean flights that were canceled. 
+
+# Arrange
+arrange(data sheet, list columns in order you want them)
+```{r}
+arrange(flights, year, month, day)
+```
+arrange(flights, desc(dep_delay))
+#modification and arranging the data frame by the values in a column
+```{r}
+arrange(flights, desc(dep_delay))
+```
+# Textbook Exercises 5.3
+How could you use arrange() to sort all missing values to the start? (Hint: use is.na()).
+```{r}
+arrange(flights, desc(is.na(dep_time)))
+```
+
+Sort flights to find the most delayed flights. Find the flights that left earliest.
+```{r}
+arrange(flights, desc(dep_delay))
+```
+
+Sort flights to find the fastest (highest speed) flights.
+```{r}
+arrange(flights,desc(distance/air_time))
+```
+
+Which flights traveled the farthest? Which travelled the shortest?
+
+```{r}
+arrange(flights, desc(distance))
+```
+```{r}
+arrange(flights, distance)
+```
+
+# Select
+select() is not terribly useful with the flights data because we only have 19 variable, but you can see how it would be useful if we had hundreds or so variables
+```{r}
+#slelect columns by name
+select(flights, year, month, day)
+#select all columns between year and day
+select(flights, year:day)
+#select all columns except those from year to day
+select(flights, -(year:day))
+```
+some of other functions
+starts_with('abc')
+ends_with('123')
+contains('asdf')
+matches('(.)\\1')
+num_range('x',1:3)'
+rename(flights, tail_num = tailnum)
+select(flights, time_hour, air_time, everything())
+
+# Textbook Exercises 5.4
+Brainstorm as many ways as possible to select dep_time, dep_delay, arr_time, and arr_delay from flights.
+```{r}
+
+```
+
+What happens if you include the name of a variable multiple times in a select() call?
+```{r}
+
+```
+
+What does the any_of() function do? Why might it be helpful in conjunction with this vector?
+```{r}
+vars <- c("year", "month", "day", "dep_delay", "arr_delay")
+?one_of
+```
+
+
+Does the result of running the following code surprise you? How do the select helpers deal with case by default? How can you change that default?
+```{r}
+select(flights, contains("TIME"))
+
+```
+
+# Mutate
+
+mutate() = create new variables based on old variables
+```{r}
+mutate(flights, 
+       gain = dep_delay - arr_delay,
+       speed = distance / air_time)
+```
+you can use variable created in a mutate to create other variables within the same mutate
+```{r}
+mutate(flights, 
+        gain = dep_delay - arr_delay,
+        hours = air_time / 60,
+        gain_per_hour = gain / hours)
+```
+you can use transmute()
+this will create a df that only has the variables that you created. 
+```{r}
+transmute(flights, 
+        gain = dep_delay - arr_delay,
+        hours = air_time / 60,
+        gain_per_hour = gain / hours)
+```
+
+# Summarise
+
+It collapses a data frame into a single row
+```{r}
+summarise(flights, delay=mean(dep_delay, na.rm=TRUE))
+```
+most useful when used with other functions like group_by
+```{r}
+by_day <- group_by(flights, year, month, day)
+summarise(by_day, delay=mean(dep_delay, na.rm=TRUE))
+```
+This can be used with multiple things
+```{r}
+by_day <- group_by(flights, year, month, day)
+summarise(by_day, delay=mean(dep_delay, na.rm=TRUE), sd_delay=sd(dep_delay, na.rm = TRUE))
+```
+# Pipes
+
+%>%  pipe
+
+magrittr package that has pipes
+  this is in tidyverse
+### Pipes Example - chapter 18
+```{r}
+foo_foo %>%
+  hop(thorugh = forest) %>%
+  scoop(up = field_mice) %>%
+  bop(on = head)
+```
+
+# Missing Values Part 2
+```{r}
+flights %>%
+  group_by(year, month, day) %>%
+  summarise(mean = mean(dep_delay))
+```
+none of the mean values computed because all the things have missing values.  So we will have to affirmatively do something about htat. 
+```{r}
+flights %>%
+  group_by(year, month, day) %>%
+  summarise(mean = mean(dep_delay, na.rm=TRUE))
+```
+```{r}
+not_cancelled <- flights %>%
+  filter(!is.na(dep_delay), !is.na(arr_delay))
+
+not_cancelled <- flights %>%
+  group_by(year, month, day) %>%
+  summarise(mean = mean(dep_delay))
+
+not_cancelled
+```
+
+# Count
+
+```{r}
+delays <- not_cancelled %>%
+  group_by(tailnum) %>%
+  summarise(delay = mean(arr_delay))
+
+ggplot(data = delays, mapping = aes(x=delays)) +
+  geom_freqpoly(binwidth = 10)
+```
+```{r}
+delays <- not_cancelled %>%
+  group_by(tailnum) %>%
+  summarise( delay = mean(arr_delay, na.rm=TRUE),
+             n = n())
+
+ggplot(data = delays, mappying = aes(x = n, y = delays)) +
+  geom_point(alpha = 1/10)
+```
+```{r}
+delays %>%
+  filter(n>25) %>%
+  ggplot(mapping = aes(x=n, y=delays)) +
+  geom_point(alpha=1/10)
+```
+Changing the data set to Lehman's batting
+
+```{r}
+batting <- as_tibble(Lahman::Batting)
+
+batters <- batting %>%
+  group_by(playerID) %>%
+  summarise(
+    ba = sum(H, na.rm = TRUE) / sum(AB, na.rm = TRUE),
+    ab = sum(AB, na.rm = TRUE)
+  )
+
+batters %>%
+  filter(ab > 100) %>%
+  ggplot(mapping = aes(x=ab, y=ba)) +
+  geom_point()+
+  geom_smooth(se = FALSE)
+```
+
+```{r}
+batters %>%
+  arrange(desc(ba))
+```
+because of small sample sizes you can see people with perfect averages but that is due to being 1 for 1. or the inverse is also true.  
+to avoid this throwing off your visuals or data, you would implement a count standard to put a minumum number of at bats in this case. 
+
+# STAR Wars Example
+```{r}
+library(tidyverse)
+data("starwars")
+head(starwars)
+```
+```{r}
+starwars %>%
+  select(height, mass, species)
+```
+Get height and mass by species
+```{r}
+starwars %>%
+  select(height, mass, species) %>%
+  group_by(species) %>%
+  summarise(avg_height = mean(height, na.rm=TRUE)) %>%
+  arrange(avg_height)
+```
+```{r}
+starwars %>%
+  select(height, mass, species) %>%
+  group_by(species) %>%
+  summarise(avg_height = mean(height, na.rm=TRUE)) %>%
+  arrange(desc(avg_height))
+```
+```{r}
+starwars %>%
+  select(height, mass, species) %>%
+  group_by(species) %>%
+  summarise(avg_height = mean(height, na.rm=TRUE),
+            avg_mass = mean(mass, na.rm=TRUE)) %>%
+  arrange(desc(avg_height))
+```
+```{r}
+starwars %>%
+  select(height, mass, species) %>%
+  group_by(species) %>%
+  summarise(avg_height = mean(height, na.rm=TRUE),
+            avg_mass = mean(mass, na.rm=TRUE),
+            n = n()) %>%
+  arrange(desc(avg_mass))
+```
+# Star Wars Part 2
+```{r}
+ggplot(filter(starwars)) +
+  geom_point(aes(height, mass))
+
+```
+Remove the outlier
+```{r}
+ggplot(filter(starwars, species != 'Hutt')) +
+  geom_point(aes(height, mass))
+```
+add a gender parameter
+```{r}
+ggplot(filter(starwars, species != 'Hutt')) +
+  geom_point(aes(height, mass, color = gender))
+```
+changer gender to a facetwrap rather than color changes
+```{r}
+ggplot(filter(starwars, species != 'Hutt')) +
+  geom_point(aes(height, mass)) +
+  facet_wrap(~gender)
+```
+
+# Tidy Data
+Tidy Data explained and its rules
+  1) Each variable must have its own column
+  2) Each observation must have its own row
+  3) Each value must have its own cell
+
+# Pivots
+Why are those the rules these are the two main reasons why. 
+1) Most people aren't familar with the priniciples of tidy data, and it's hard to derive them yourself unless you spend alot of time working with data. 
+2) Data is often organised to facilitate some use other than analysis.  For example, data is often organised to make entry as easy as possible. 
+
+# More R Wrap-Up
+# Test Code
+```{r}
+starwars %>%
+       summarise(av_mass = mean(mass, na.rm = TRUE))
+```
+```{r}
+summarise(starwars, av_mass = mean(mass, na.rm = TRUE))
+```
+
+
+
+
+
+
+
+
+
+
+

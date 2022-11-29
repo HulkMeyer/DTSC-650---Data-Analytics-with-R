@@ -1,0 +1,432 @@
+---
+title: "DTSC-650-Module 2 Visualization with ggplot2"
+author: "HulkMeyer"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+# Visualization with ggplot2
+
+## Visualization with ggplot2 introduction 1
+
+## Visualizations with ggplot2 introduction 2
+
+```{r}
+library(tidyverse)
+```
+
+```{r Data set we will be working with}
+mpg
+```
+
+```{r initial plot with ggplot2, message=TRUE, warning=TRUE}
+ggplot(data=mpg) + # you can take the data=mpg out of it and it still function, if you are going to do other things from other datasets
+  geom_point(mapping = aes(x=displ, y=hwy))
+```
+
+General format needs to look something like ggplot(data = <dataset>) <geom_function>(mapping=aes(<mappings>))
+
+3.2 Exercises Exercise 1: Run ggplot(data=mpg), what do you see?
+
+```{r Exercise 1, message=TRUE, warning=TRUE}
+ggplot(data=mpg)
+```
+
+happened because we did not put any geometric objects into the plot
+
+Exercise 2: How many rows are in mpg? How many columns?
+
+```{r Exercise 2, message=TRUE, warning=TRUE}
+summary(mpg)
+print(" ")
+print(nrow(mpg))
+print(' ')
+print(ncol(mpg))
+```
+
+234 rows and 11 columns
+
+Exercise 3: What does the drv variable describe? Read the help for ?mpg to find out
+
+```{r Exercise 3, message=TRUE, warning=TRUE}
+head(mpg)
+```
+
+From the head, I would say male(m) or female(f)
+
+```{r}
+?mpg
+```
+
+drv \* the type of drive train, where f = front-wheel drive, r = rear wheel drive, 4 = 4wd
+
+So correct answer is what wheels are providing the movement force front, rear, all four.
+
+Exercise 4: Make a scatterplot of hwy vs cyl
+
+```{r}
+ggplot(data=mpg) + 
+  geom_point(mapping = aes(x=hwy, y=cyl))
+```
+
+Exercise 5: What happens if you make a scatterplot of class vs drv? Why is the plot not useful
+
+```{r}
+ggplot(data=mpg) + 
+  geom_point(mapping = aes(x=class, y=drv))
+```
+
+graphy is not useful mostly because 5 of 7 classes are 4 wheel drive, 4 of 7 are front and there is 50+ overlap of the two, 2 seaters are all rear wheel, and suvs are only offered in rear or 4wheel. minivans are all front wheel. There is some useful but this combined with fuel economy or cylinder would be better.
+
+video answer : because both variables are discrete, so not a typical scatterplot. Points out that we need to be better at picking what visual we choose for the data we are looking at.
+
+## Aesthetic Mappings
+
+## Textbook Exercises 3.4
+
+Exercise 1: What's gone wrong with this code? Why are the points not blue?
+
+```{r}
+ggplot(data = mpg) +
+  geom_point(mapping = aes(x=displ, y = hwy),color = "blue")
+```
+
+Exercise2: Which variable in mpg are categorical? Which variables are continous? How can you see this infomration when you run mpg?
+
+```{r}
+?mpg
+summary(mpg)
+```
+
+Catagorical Varables: Manufacturer, Model, Year, Trans, Drv, FL, Class \### correct answer
+
+Exercise 3; Map a continuous variable to color, size and shape. How do these aethetics behave differently for categorical vs. continuous variables?
+
+```{r}
+ggplot(mpg) +
+  geom_point(aes(cty, hwy, color = displ))
+
+ggplot(mpg) +
+  geom_point(aes(cty, hwy, color = trans))
+```
+
+When color is mapped to a continuous variable you get a gradiant color scheem rather than a discrete color scheem when the variable is discrete as we did when mapped with trans.
+
+Note: Continuous variables cannot be attached to shape AES as shapes are not a continous item as size and color are.
+
+Exercise 4: What happens if you map the same variable to multiple aesthetics
+
+```{r}
+ggplot(mpg) +
+  geom_point(aes(cty, hwy, color = displ, size = displ))
+```
+
+You have redundancy as the color changes the size also changes.
+
+Exercise 5: What does the stroke aesthetic do? What shapes does it work with? (hint: use ?geom_point)
+
+```{r}
+ggplot(mpg) +
+  geom_point(aes(cty, hwy, color = displ, stroke = 5))
+# changes the size of the markers
+```
+
+Exercise 6: What happens if you map an aesthetic to something other than a variable name, like aes(colour = displ \< 5)? Note, you'll also need to specify x and y.
+
+```{r}
+ggplot(mpg) +
+  geom_point(aes(cty, hwy, color = displ<5))
+```
+
+## Common Problems
+
+Stack overflow will be a great reference, if you are having issues in your coding.
+
+## Facets
+
+```{r}
+ggplot(mpg) +
+  geom_point(mapping = aes(x=displ, y=hwy))+
+  facet_wrap(~ class, nrow = 2) #Facet needs to be a discrete variable to create nice catagories
+```
+
+You can add in a second variable
+
+```{r}
+ggplot(mpg) +
+  geom_point(mapping = aes(x=displ, y=hwy))+
+  facet_grid(drv ~ cyl) # change facet_wrap to facet_grid if you are going to use 2 variables
+```
+
+could be used to help find subgroups to dive deeper into exploritory analysis with. But not something you would probably want to present to someone.
+
+## Textbook Exercises 3.5
+
+Exercise 1: What happens if you facet on a continous variable?
+
+```{r}
+ggplot(mpg) +
+  geom_point(mapping = aes(x=displ, y=hwy))+
+  facet_wrap(~ cty, nrow = 2)
+```
+
+Exercise 2: What do the empty clels in plot with facet_grid(drv\~cyl) mean? How do they relate to this plot? Graph is above.
+
+Exercise 3: What plots does the following code make? What does . do?
+
+```{r}
+ggplot(mpg) +
+  geom_point(mapping = aes(x=displ, y=hwy))+
+  facet_grid(drv ~ .)
+
+ggplot(mpg) +
+  geom_point(mapping = aes(x=displ, y=hwy))+
+  facet_grid(. ~ cyl)
+```
+
+changes rows vs. columns
+
+Exercise 4: Take the first faceted plot in this section:
+
+```{r}
+ggplot(mpg) +
+  geom_point(mapping = aes(x=displ, y=hwy))+
+  facet_wrap(~ class, nrow = 2)
+```
+
+What are the advantages to useing faceting instead of the colour aesthetic? What are the disadvantages? How might the balance change if you had a larger dataset?
+
+Color AES - the colors make the data hard to distinguish as the number of classes gets large. It would become more gradiant, to the facet wrap would be better for that.
+
+Exercise 5: Read ?facet_wrap. Wht does nrow do? Wht does ncol do? What other options control the layout of the individual planles? Why doesn't facet_grid() have nrow and ncol arguements?
+
+```{r}
+?facet_wrap
+# nrow, ncol ---- Number of rows and columns.
+```
+
+Facet_grid automatically sets the rows and columns by the data that you give it for the grid.
+
+Exercise 6: When using facet_grid() you should usually put the variable with more unique levels in the Generally you have a wider layout, so the one with more levels will be able to be seen more easily with all columns show on the same level. Think monitors are wider than they are tall, so you could get more columns horizantally than you would rows vertically.
+
+## Geometric Objects
+
+```{r}
+ggplot(data=mpg)+
+  geom_point(mapping=aes(x=displ, y=hwy))
+
+ggplot(mpg)+
+  geom_smooth(mapping = aes(x=displ, y=hwy))
+```
+
+```{r}
+ggplot(mpg) +
+  geom_smooth(mapping = aes(x=displ, y=hwy, linetype=drv))
+```
+
+```{r}
+ggplot(data=mpg, mapping=aes(x=displ, y=hwy, color=drv)) +
+  geom_point()+
+  geom_smooth(mapping=aes(linetype=drv))
+```
+
+```{r}
+ggplot(mpg, mapping=aes(x=displ, y=hwy))+
+  geom_point(mapping = aes(color=class))+
+  geom_smooth()
+```
+
+## Textbook Exercises 3.6
+
+Exercise 1: What geom would you use to draw a line chart? A boxplot? A histogram? An area chart? geom_line geom_boxplot geom_histogram
+
+Exercise 2: Run this code in your head and predict what the output will look like. Then, run the code in R and check your predictions.
+
+```{r}
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy, color = drv)) + 
+  geom_point() + 
+  geom_smooth(se = FALSE)
+```
+
+Exercise 3: What does show.legend = FALSE do? What happens if you remove it?Why do you think I used it earlier in the chapter? A legend would not be present on the graph.
+
+Exercise 4: What does the se argument to geom_smooth() do? Takes the standard error shaded area off the graph. so you would just have the line
+
+Exercise 5: Will these two graphs look different? Why/why not?
+
+```{r}
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_point() + 
+  geom_smooth()
+
+ggplot() + 
+  geom_point(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_smooth(data = mpg, mapping = aes(x = displ, y = hwy))
+```
+
+Exercise 6: Recreate the R code necessary to generate the following graphs.
+
+```{r echo = FALSE, fig.width = 3, out.width = "50%", fig.align = "default", message = FALSE}
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_point() + 
+  geom_smooth(se = FALSE)
+
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_smooth(aes(group = drv), se = FALSE) +
+  geom_point()
+
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy, color = drv)) + 
+  geom_point() + 
+  geom_smooth(se = FALSE)
+
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_point(aes(color = drv)) + 
+  geom_smooth(se = FALSE)
+
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_point(aes(color = drv)) +
+  geom_smooth(aes(linetype = drv), se = FALSE)
+
+ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) + 
+  geom_point(size = 4, colour = "white") + 
+  geom_point(aes(colour = drv))
+
+```
+
+## Statistical Transformations
+
+```{r}
+ggplot(diamonds)+
+  geom_bar(mapping = aes(x=cut))
+```
+
+```{r}
+ggplot(diamonds)+
+  geom_bar(mapping = aes(x=cut, y=stat(prop), group=1))
+```
+
+```{r}
+ggplot(diamonds)+
+  stat_summary(
+    mapping = aes(x=cut, y=depth),
+                  fun.ymin=min,
+                  fun.ymax=max,
+                  fun.y=median
+  )
+```
+
+## Textbook Exercises 3.7
+
+Exercise 1: A) What is the default geom associated with stat_summary()? B)How could you rewrite the previous plot to use that geom function instead of the stat function?
+
+```{r}
+?stat_summary
+```
+
+A)  Geom: pointrange
+B)  
+
+```{r}
+ggplot(diamonds)+
+  geom_pointrange(aes(cut,depth), stat='summary',
+                  fun.min=min,
+                  fun.max=max,
+                  fun=median
+                  )
+```
+
+Exercise 2: What does geom_col() do? How is it different to geom_bar()?
+
+```{r}
+?geom_col
+```
+
+There are two types of bar charts: geom_bar() and geom_col(). geom_bar() makes the height of the bar proportional to the number of cases in each group (or if the weight aesthetic is supplied, the sum of the weights). If you want the heights of the bars to represent values in the data, use geom_col() instead.
+
+Exercise 3: Most geoms and stats come in pairs that are almost always used in concert. Read through the documentation and make a list of all the pairs. What do they have in common?
+
+Exercise 4: What variables does stat_smooth() compute? What parameters control its behaviour?
+
+```{r}
+?stat_smooth
+```
+
+Computed Variables: y or x, ymin, xmin, ymax, xmax, se parameters controlling its behaviour Method: Smoothing method (function) to use, accepts either NULL or a character vector, e.g. "lm", "glm", "gam", "loess" or a function, e.g. MASS::rlm or mgcv::gam, stats::lm, or stats::loess. "auto" is also accepted for backwards compatibility. It is equivalent to NULL.
+
+For method = NULL the smoothing method is chosen based on the size of the largest group (across all panels). stats::loess() is used for less than 1,000 observations; otherwise mgcv::gam() is used with formula = y \~ s(x, bs = "cs") with method = "REML". Somewhat anecdotally, loess gives a better appearance, but is O(N\^{2})O(N 2 ) in memory, so does not work for larger datasets.
+
+If you have fewer than 1,000 observations but want to use the same gam() model that method = NULL would use, then set ⁠method = "gam", formula = y \~ s(x, bs = "cs")⁠.
+
+Formula: Formula to use in smoothing function, eg. y \~ x, y \~ poly(x, 2), y \~ log(x). NULL by default, in which case method = NULL implies formula = y \~ x when there are fewer than 1,000 observations and formula = y \~ s(x, bs = "cs") otherwise.
+
+Exercise 5: In our proportion bar chart, we need to set group = 1. Why? In other words what is the problem with these two graphs?
+
+```{r}
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, y = after_stat(prop)))
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, fill = color, y = after_stat(prop)))
+```
+
+## Position Adjustments
+
+```{r}
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, colour = cut)) # outline of the bars
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, fill = cut)) # fills the bar with color
+```
+
+```{r}
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, fill = clarity)) #by setting fill to clarity we are able to show another variable in the graph
+```
+
+```{r}
+ggplot(data = diamonds, mapping = aes(x = cut, fill = clarity)) + 
+  geom_bar(alpha = 1/5, position = "identity")
+ggplot(data = diamonds, mapping = aes(x = cut, colour = clarity)) + 
+  geom_bar(fill = NA, position = "identity")
+```
+
+```{r}
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, fill = clarity), position = "fill")
+```
+
+```{r}
+ggplot(data = diamonds) + 
+  geom_bar(mapping = aes(x = cut, fill = clarity), position = "dodge")
+```
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy), position = "jitter")
+```
+
+## Textbook Exercises 3.8
+
+### SKIPPED
+
+## The Layered Grammar of Graphics
+
+# Test
+```{r}
+ggplot(data = mpg, aes(x=displ, y=hwy))+
+  geom_point()
+
+ggplot(data=mpg)+
+  geom_point(mapping=aes(x=displ,y=hwy))
+
+ggplot(data=mpg)+
+```
+
+
+```{r}
+geom_point(mapping=aes(x=displ,y=hwy))
+```
+```{r}
+ggplot(mpg)+
+  geom_boxplot(mapping = aes(hwy))
+```
+

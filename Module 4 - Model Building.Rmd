@@ -1,0 +1,215 @@
+---
+title: "Module 4 - Model Building"
+author: "HulkMeyer"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+# Module 4 - Model Building
+
+## Outliers
+```{r message=TRUE, warning=TRUE}
+library(tidyverse)
+data(diamonds)
+summary(diamonds)
+```
+### Basic plots
+```{r}
+ggplot(diamonds) +
+  geom_histogram(mapping = aes(x=y), binwidth = 0.5) +
+  coord_cartesian(ylim = c(0, 50))
+```
+### Box Plot
+```{r}
+ggplot(diamonds) +
+  geom_boxplot(mapping = aes(y))
+```
+### Identifying outliers
+```{r}
+diamonds_upper <- quantile(diamonds$y, .9985, na.rm = TRUE)
+diamonds_upper
+```
+```{r}
+diamonds_lower <- quantile(diamonds$y, .0015, na.rm = TRUE)
+diamonds_lower
+```
+```{r}
+diamonds_out <- which(diamonds$y > diamonds_upper | diamonds$y < diamonds_lower)
+print(diamonds_out)
+```
+### Percent Remaining
+```{r}
+(nrow(diamonds) - length(diamonds_out))/ nrow(diamonds)*100
+```
+Taking the outliers out of the main dataset
+```{r}
+diamonds_no_out <- diamonds[-diamonds_out,]
+```
+### Plot Diamonds without the outliers
+```{r}
+ggplot(diamonds_no_out) +
+  geom_boxplot(mapping = aes(y))
+```
+### Correlation and Regression
+```{r}
+ggplot(diamonds) +
+  geom_point(aes(y, price))
+```
+Above we can see the outliers that we have removed and will see the difference in the next graph
+```{r}
+ggplot(diamonds_no_out) +
+  geom_point(aes(y, price))
+```
+Our new correlation and regression without the outliers.  This puts a much better view of what we are looking at. 
+
+### Running the correlation for both the original diamonds and our new one without the outliers
+Original Diamonds
+```{r}
+cor.test(diamonds$y, diamonds$price)
+```
+Diamonds with outliers removed
+```{r}
+cor.test(diamonds_no_out$y, diamonds_no_out$price)
+```
+Based on this we started with a correlation of .8654 and increased to .8881.  This shows that the correlation is stronger without the outliers which were throwing off by 2 points. It is important to not that both are very strong positive correlations
+
+### Running regressions with and without outliers
+predicting y from price using the original diamonds dataset
+```{r}
+reg1 <- lm(y ~ price, data=diamonds)
+summary(reg1)
+```
+predicting y from price using the original diamonds dataset
+```{r}
+reg2 <- lm(y ~ price, data=diamonds_no_out)
+summary(reg2)
+```
+```{r}
+print(AIC(reg1))
+print(' ')
+print(AIC(reg2))
+```
+## Nonrandom Outliers
+Working under the knowledge that the outliers that have 0 y values are miss coded
+```{r}
+ggplot(diamonds) +
+  geom_point(aes(y, price))
+```
+Another way to brute force filter out values (not very refined like we did above)
+```{r}
+diamonds_non <- diamonds %>%
+  filter(y > 1 & y < 20)
+```
+```{r}
+ggplot(diamonds_no_out) +
+  geom_boxplot(mapping = aes(y))
+```
+```{r}
+ggplot(diamonds_non) +
+  geom_boxplot(mapping = aes(y))
+```
+second way still has some values that we may still think of as outliers
+need to be refinind using the quantile method that was outlined at the start.
+
+## Model Building Introduction
+Dr. Logos just talking about being more deliberate and heading to Machine Learning
+
+## Model Building Introduction 2
+Dr. Logo talked about looking at the data and allowing that to determine what modeling approach will work best for the data.  
+
+## Simple Models
+
+```{r}
+library(modelr)
+options(na.action = na.warn)
+
+ggplot(sim1, aes(x,y)) +
+  geom_point()
+```
+Working throught the texts kind of random approach to regression, where they simulate lines of best fit
+
+### Codding predition with modelr package
+```{r}
+#create sim1mod for later
+sim1mod <- lm(y~x, data = sim1)
+coef(sim1mod)
+
+
+
+grid <- sim1 %>%
+  data_grid(x)
+grid
+```
+creating a predition
+```{r}
+grid <- grid %>%
+  add_predictions(sim1mod)
+grid
+```
+Plotting the prediction over the original scatterplot data
+```{r}
+ggplot(sim1, aes(x)) +
+  geom_point(aes(y=y)) +
+  geom_line(aes(y=pred), data = grid, color='red', size=1)
+```
+### Residuals
+Creating the residuals models
+```{r}
+sim1 <- sim1 %>%
+  add_residuals(sim1mod)
+sim1
+```
+plot the residuals
+```{r}
+ggplot(sim1, aes(resid)) +
+  geom_freqpoly(binwidth = .5)
+```
+## Visualizing Models
+Goes back over the Modelr package that was outlined above
+
+## Other Models
+
+* Generalized linear models
+  * stats::glm()
+* Generalized Additive Models
+  * mgcv::gam()
+* Penalised Linear Models
+  * Glmnet::glmnet()
+* Robust Linear Models
+  * MASS::rlm()
+*Trees
+  * rpart::rpart()
+  * will look at this in the Machine Learning context
+  
+This class will be focused on the Linear models
+
+## SHMUELI2010 
+a 22 page paper about the difference in modeling for explaining 
+  vs. 
+using modeling for predicting.  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,384 @@
+---
+title: "Module 5 - Assumptions"
+author: "HulkMeyer"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+# Module 5 - Assumptions
+
+## Assumptions Introduction
+
+## Assumptions Part 1
+
+Parametric Data Assumptions
+* Normal Distribution
+* Homogenisty of Variance
+* Interval data
+* Independence
+
+## Normality
+Normality
+* We assume our sampling distribution is normally distributed
+* But, what is a sampling distribtuion again?
+
+Samping Distribution
+  * Taking many many samples from population and lets say we look at means, the frequency distribution of those sample means should be normally distributed
+  * Mean of the sample means should be equal to the population mean
+  
+Normality continued 
+* We assume our sampling distribution is normally distributed
+* Central limit theorem
+* greater than 30 sampling observations
+
+Standard Error of the mean should be the standard deviation of our sampling distribution
+
+Checking for Normality
+Assumptions:
+* If out sample data is approximately normal, we will assume that our sampling distribution will be as well.
+
+
+## Checking Assumptions
+
+How to check assumptions
+* Graphing
+* Skew and Kurtosis
+  * Skew and kurtosis should be zero in a normal distribution
+    * When you divide Skew and Kurtosis by the standard error you get skew.2SE and kurt.2SE
+      Think of these as **z-scores** for Skew and Kurtosis
+    * We can then look at these scores and see how likely they are to have occured
+    * When you start looking at very large samples, these values may not be that helpful.  In this case visualization is best
+    * **Shapiro-Wilk test** :Can also do the Shapiro-Wilk test (normtest.W and normtest.p)
+      * You'll get a w-value and a p-value
+      * if P < .05 (significant), there is an indication the distribtuions are not normal
+      * if p > .05, distribtuion not significanly different than normal
+      * However... with large sample sizes it can be easily signigicant with small deviations in normality.  
+            * This means you should plot everything for verification of numerical evidence
+  * Positive skew = more scores on left
+  * Negative skew = more scores on right
+  *
+* Stats
+
+## Homogeneity of Variance
+
+Homogeneity of variance
+* As you go through levels of one variable, the variance of others shouldn't change
+  * If you have groups, variance of outcomes should be equal across groups
+  * If you are using correlation, variance of one variable should be stable at all levels of the others
+    *   If there is a great deal of variance we need to run Levene's Test
+
+If there is a great deal of variance between the variables we can address that with 
+* **Levene's Test**
+  * Levene's test tests the null hypothesis that variance in groups are equal
+  * If p < .05, we cannot conclude that the null is incorrect, therefore assumption has been violated
+  * If p > .05, we're happy = assumption is tenable
+  
+#### General Cheat-Sheet
+  * Skewness & Kurtosis
+    * Positive Value - more on left
+    * Negative Value - more on right
+    * Look at skew.2SE and kurt.2SE columns
+      * > 1, significant p < .05
+      * > 1.29, p < .01
+      * > 1.65, p < .001
+      
+  * Shapiro-Wilk
+    * p < .05 = violation
+    
+  * Levene
+    * p < .05 = violation
+    
+## Violations of Normality
+
+So what if things aren't normal???
+* Remove the case
+  * Need to have some sort of justification for the removal
+  * gets murky if there is no reason and it is a true outlier
+  * this is a major thing, you need to justify in writing if you do this for a paper
+* Transform the data
+  * statistical transformation
+  * square root transformation as example
+  * Dependent on area
+  * Must also be clearly communicated that you did this, your output will also have this done to it so it will change how you interpret the scores
+* Change the score
+  * Next highest score plus one
+    * As an example: if your highest value was 50, and the next highest is 10.  You would change the 50 value to 10+1=11, so it would be 11 instead of 50.
+      Still the highest value but more inside your overall data set
+  * Convert back from z-score
+    * identify how many SD above and below you want to make the cut off and convert that z value into a raw score and make that outlier value equal to that raw score.  
+  * The mean +2SD
+    * What ever this worked out to be make that the value for the outliers
+** Keep in mind that no matter what you are doing you will need to be able to stand up and justify the choice and make a case for it**
+  also a good idea to know what would happen if you left it in or what would happen in the other methods. 
+  
+## Visualizing Assumptions
+```{r}
+library(tidyverse)
+library(readr)
+library(pastecs)
+library(psych)
+library(patchwork)
+```
+## Festival Dataset
+From Field's *Discovering Statistics Using R
+```{r}
+dlf <- download_festival
+head(dlf)
+```
+```{r}
+summary(dlf)
+```
+### Visualizing the distribution
+```{r}
+ggplot(dlf, aes(day_1)) +
+  geom_histogram(aes(y=..density..), colour = 'black', fill='white') +
+  labs(x='Hygiene score on day 1', y='Density')
+```
+We can see from this that there is an outlier at 20.  
+Next we will overlay the stat funciton for the Normal Distribution and see what that looks like
+```{r}
+hist.day1 <- ggplot(dlf, aes(day_1)) +
+  geom_histogram(aes(y=..density..), colour = 'black', fill='white') +
+  labs(x='Hygiene score on day 1', y='Density') +
+  stat_function(fun=dnorm, args=list(mean = mean(dlf$day_1, na.rm=TRUE),
+                                     sd=sd(dlf$day_1, na.rm=TRUE)),
+                colour='red', size=1)
+hist.day1
+```
+now if we remove the outliers using the method from model building.
+```{r}
+dlf_upper <- quantile(dlf$day_1, .9985, na.rm = TRUE)
+dlf_lower <- quantile(dlf$day_1, .0015, na.rm = TRUE)
+dlf_out <- which(dlf$day_1 > dlf_upper | dlf$day_1 < dlf_lower)
+print(dlf_out)
+dlf_no_out <- dlf[-dlf_out,]
+dlf_no_out <- as.data.frame(dlf_no_out)
+cols <- c(1,3,4,5)
+dlf_no_out[,cols] <- apply(dlf_no_out[,cols], 2, function(x)as.numeric(as.character(x)))
+```
+We can now look at what we have remaining, this should be more closely aligned to the normal distribution
+```{r}
+ggplot(dlf_no_out, aes(day_1)) +
+  geom_histogram(aes(y=..density..), colour = 'black', fill='white') +
+  labs(x='Hygiene score on day 1', y='Density')
+```
+if we try to addin the normal curve we get
+```{r}
+ggplot(dlf_no_out, aes(day_1)) +
+  geom_histogram(aes(y=..density..), colour = 'black', fill='white') +
+  labs(x='Hygiene score on day 1', y='Density') +
+  stat_function(fun=dnorm, args=list(mean(dlf_no_out$day_1, na.rm=TRUE), sd=sd(dlf$day_1, na.rm = TRUE)), colour='blue', size=1)
+
+```
+This doesn't look terrible, we may have taken to much dataout but we can change that in an analysis.  Lets look at Day 2
+```{r}
+hist.day2 <- ggplot(dlf, aes(day_2)) +
+  geom_histogram(aes(y=..density..), colour = 'black', fill='white') +
+  labs(x='Hygiene score on day 2', y='Density') +
+  stat_function(fun=dnorm, args=list(mean = mean(dlf$day_2, na.rm=TRUE),
+                                     sd=sd(dlf$day_2, na.rm=TRUE)),
+                colour='red', size=1)
+hist.day2
+```
+Looking at Day 3
+```{r}
+hist.day3 <- ggplot(dlf, aes(day_3)) +
+  geom_histogram(aes(y=..density..), colour = 'black', fill='white') +
+  labs(x='Hygiene score on day 3', y='Density') +
+  stat_function(fun=dnorm, args=list(mean = mean(dlf$day_3, na.rm=TRUE),
+                                     sd=sd(dlf$day_3, na.rm=TRUE)),
+                colour='red', size=1)
+hist.day3
+```
+```{r}
+#Patchwork library function
+hist.day1 / hist.day2 / hist.day3
+```
+
+## Q-Q plots
+```{r}
+qqplots.day1 <- ggplot(dlf, aes(sample = day_1)) +
+  stat_qq() +
+  stat_qq_line()
+
+qqplots.day1
+```
+This is a good graph for checking Normality visually.  We can see that one big outlier and if we check out dataset with outliers removed we can see that the points more closely follow the line.
+```{r}
+qqplots.day1_nl_out <- ggplot(dlf_no_out, aes(sample = day_1)) +
+  stat_qq() +
+  stat_qq_line()
+
+qqplots.day1_nl_out
+```
+This is a much better relationship to the normal curve.  It is normal for them to start to diviate as we get closer to the ends.
+What is happening is the sample z-score is being ploted against the theorretical z=score.  the more those align the better the fit to the normal distro.
+if we look at day 2 and 3 we can see a great deal of deviation
+```{r}
+# Day 2
+qqplots.day2 <- ggplot(dlf_no_out, aes(sample = day_2)) +
+  stat_qq() +
+  stat_qq_line()
+
+qqplots.day2
+```
+```{r}
+#Day 3
+qqplots.day3 <- ggplot(dlf_no_out, aes(sample = day_3)) +
+  stat_qq() +
+  stat_qq_line()
+
+qqplots.day3
+```
+QQ plots are the best method to visualize deviations from normality
+
+## An Example
+Four variables
+* exam: first exam score; percentage
+* computer: measure of computer literacy; percentage
+* lecture: percent of lectures attended
+* numeracy: measure of numerical ability; out of 15
+
+```{r}
+rexam <- r_exam
+summary(rexam)
+head(rexam)
+```
+```{r}
+nrow(rexam)
+```
+```{r}
+#rexam$uni <- factor(c('Duncetown U' , 'Sussex U')) # <- was supposed to make uni Boolean, I don't think I coded this right but further down you will see why it would have helped.
+# Looking at the exam scores
+hexam <- ggplot(rexam, aes(exam)) +
+  geom_histogram(aes(y=..density..), colour='black',fill='green') +
+  labs(x='First Year Exam Score', y='Density') +
+  stat_function(fun=dnorm, args=list(mean=mean(rexam$exam,na.rm = TRUE), sd=sd(rexam$exam, na.rm = TRUE)), colour='red', size=1)
+
+hexam
+```
+```{r}
+# Looking at the computer scores
+hcomputer <- ggplot(rexam, aes(computer)) +
+  geom_histogram(aes(y=..density..), colour='black',fill='green') +
+  labs(x='Computer Literacy', y='Density') +
+  stat_function(fun=dnorm, args=list(mean=mean(rexam$computer,na.rm = TRUE), sd=sd(rexam$computer, na.rm = TRUE)), colour='red', size=1)
+
+hcomputer
+```
+Let compare these two pieces of data
+```{r}
+describe(cbind(rexam$exam, rexam$computer, rexam$uni))
+```
+Above the X3 for UNI had my factor code work would have made it Boolean and we would have had values instead of NaN everywhere.  But it would have illistrated that though we had statistics they were meaningless X1 and X2 are useful.  But just cause you have stats doesn't mean they are useful or should be used. 
+
+Seperating our data by University
+```{r}
+du <- rexam %>%
+  filter(uni == 'Duncetown University')
+
+su <- rexam %>%
+  filter(uni == 'Sussex University')
+```
+Creating plots for exam scores broken down by university
+```{r}
+du.exam <- ggplot(du, aes(exam)) +
+  geom_histogram(aes(y=..density..), colour='black',fill='green') +
+  labs(x='First Year Exam Score', y='Density') +
+  stat_function(fun=dnorm, args=list(mean=mean(du$exam,na.rm = TRUE), sd=sd(du$exam, na.rm = TRUE)), colour='red', size=1)
+
+su.exam <- ggplot(su, aes(exam)) +
+  geom_histogram(aes(y=..density..), colour='black',fill='green') +
+  labs(x='First Year Exam Score', y='Density') +
+  stat_function(fun=dnorm, args=list(mean=mean(su$exam,na.rm = TRUE), sd=sd(su$exam, na.rm = TRUE)), colour='red', size=1)
+
+du.exam + su.exam
+```
+
+### Tests of normality
+There are many tests for viloations of normality
+*Anderson-darling
+*Kolmogorov-Smirnov Test
+*etc
+Shiapiro-Wilk is arguably the  most useful
+*Shapiro-Wild 'Compares the scores in the sample to a normally distributed set of scores with the same mean and standard deviation'
+* When significant, it means our sample is significantly different than the normal distribution
+```{r}
+stat.desc(rexam[,c('exam', 'numeracy')], basic = FALSE, norm = TRUE) %>%
+  round(3)
+```
+This could have been run for all the variables but only ran it for these two.
+when we look at the normtest.p value we can see that both of them are below the .05 threshold so both is significant.  
+This can be done by running the test below to get those values directly
+```{r}
+shapiro.test(rexam$numeracy)
+```
+### How to interpret the output
+The shapiro.test() 'W' provides the equivalent vale to normtest.W from stat.desc()
+The p-value is equivalent to the normtest.p from stat.desc()
+
+### Other Comments
+* Generally, when samples are small there won't be enough power to reject the null
+* Generally, when samples are large even small deviations from normality wil cause rejection
+* What do we do then???
+
+```{r}
+qqex <- ggplot(rexam, aes(sample=exam)) +
+  stat_qq()+
+  stat_qq_line()
+
+qqex
+```
+
+## Odds and Ends
+
+### What about Groups???
+It is not enough to just test for Normality in the whole data set.  We also need to check the normality of the subgroups
+in the case above
+* Dunctown University 
+```{r}
+stat.desc(du[,c('exam', 'numeracy')], basic = FALSE, norm = TRUE) %>%
+  round(3)
+```
+* Sussex University
+```{r}
+stat.desc(su[,c('exam', 'numeracy')], basic = FALSE, norm = TRUE) %>%
+  round(3)
+```
+When we look at the normtest.p, we can see that both independently are not significant.  However when we go back and look at the plots we can see that this is not accurate.  We stated earlier that when samples are small, there may not be enough force or power to reject the null and it is probable that this is the case in this scenario.  You best bests are going to be looking at the QQ plots and histograms.  See below.
+```{r}
+qqex.su <- ggplot(su, aes(sample=exam)) +
+  stat_qq()+
+  stat_qq_line()
+
+qqex.du <- ggplot(du, aes(sample=exam)) +
+  stat_qq()+
+  stat_qq_line()
+```
+print the QQ plots side by side
+```{r}
+qqex.su | qqex.du
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  

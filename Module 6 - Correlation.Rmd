@@ -1,0 +1,230 @@
+---
+title: "Module 6 - Correlation"
+author: "HulkMeyer"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+# Module 6 - Correlation
+
+## What is Correlation
+
+ Correlation is one of the most widely used tools in statistics.  The correlation coefficient summarizes the association between two variables.  in this visualization I show a scatter plot of two variables with a given correlation.  The variables are samples from the standard normal distribution, which are then transformed to have a given correlation by using Cholesky decomposition. By moving the slider you will see how the shape of the data changes as the association becomes stronger or weaker.  you can also look at the Venn diagram to see the amount of shared variance between the variables.  It is also possible drag the data points to see how the correlation is influenced by outliers. 
+ 
+### What to know about correlation
+* By default, we're referring to the Pearson product-moment correlation
+* Correlation is the degree to which there is a linear relationship between two variables
+  * A perfect 'U' of datapoints would have a correlation of 0
+* Any disucssion of 'correlation' when not referring to this specific measure is wrong (in this context of thos course... and life)
+  * You're better off saying 'relationship' than correlation
+* Correlation range between -1 and 1
+* The closer to -1 or 1, the stronger the relationship
+  * Correlations of -.85 or .85 are equally strong
+* Correlation does not = causation
+
+### Assumptions
+* Minimally interval data
+* Sampling distribution must be normally distributed (to establish significance)
+
+### Variance and Covariance
+* To thos point we've discussed variance in some depth
+
+ 
+## Variance, Covariance, and Equations
+
+## Correlation in R
+* Three ways to run correlations
+ * cor()
+    * **stats** package
+ * cor.test()
+    * **stats** package
+ * rcorr()
+    * **Hmisc** package
+
+cor() vs. cor.test()
+```{r}
+library(stats)
+cor(NBA_Small_Data)
+```
+```{r}
+cor.test(NBA_Small_Data$Years, NBA_Small_Data$Scoring_Champ)
+```
+```{r message=FALSE, warning=FALSE}
+library(Hmisc)
+examData <- read.delim('Exam Anxiety.dat', header=TRUE)
+head(examData)
+```
+Exam Anziety Dataset
+* Code: participant ID
+* Revise: amount of hours studying
+* Exam: Exam Grade
+* Anxiety: Exam Anxiety Score
+* Gender: Self-explanatory
+
+```{r message=FALSE, warning=FALSE}
+library(tidyverse)
+smallset <- select(examData, Revise, Exam, Anxiety)
+cor(smallset)
+```
+```{r}
+ggplot(smallset) +
+  geom_point(aes(Revise, Exam))
+```
+```{r}
+ggplot(smallset) +
+  geom_point(aes(Anxiety, Exam))
+```
+```{r}
+ggplot(smallset) +
+  geom_point(aes(Revise, Anxiety))
+```
+#### R^2
+  or the coefficient of determination, is the amount of variance shared between two variables
+  * In our example, the relationship between exam score and axiety = -.44
+  * r^2 = -.44^2 = .19
+  19% of vvariance in exam scores is shared by anxiety
+  
+## Spearman
+
+### Spearman's Correlation
+  Spearman's correlation is non-parametric
+   * Nonparametic = data are not normally distributed
+  Instead of r, Spearman's correlation is *p* or rho
+  In Spearman's data are first ranked, and the ranks are used in pearson's equation
+
+```{r}
+cor(smallset)
+```
+```{r}
+cor(smallset, method = 'spearman')
+```
+```{r}
+cor.test(smallset$Anxiety, smallset$Exam, method = 'spearman')
+```
+## Visualizing Correlation in R
+
+```{r}
+library(corrgram)
+corrgram(smallset)
+```
+Also the DataExplorer package
+```{r}
+library(DataExplorer)
+plot_intro(examData)
+```
+```{r}
+plot_bar(examData)
+```
+```{r}
+plot_histogram(examData)
+```
+```{r}
+plot_qq(examData)
+```
+```{r}
+plot_boxplot(examData, by = 'Exam')
+```
+```{r}
+plot_correlation(examData)
+```
+## Biserial and Point-Biserial Correlations
+
+* Both types are used when one of two variables are discrete
+* Distinction: is the discrete variable continuous or dichotomous?
+  * Continuous: Some underlying continuum
+    * Pass / Fail a test
+  * Dichotomous: No continuum
+    * Alive / Dead
+* Bisereal: continous
+* Point-Biserial: dichotomy
+
+Big Brother Dataset
+```{r}
+BBdata <- read.delim('BigBrother.dat', header=TRUE)
+```
+## Partial and Semi-Partial correlations Part 1
+
+We've seen these data before
+
+  * Using the Exam data set - these have already been loaded but wanted the code down here as well
+```{r}
+#library(tidyverse)
+#examData <- read.delim('Exam Anxiety.dat', header=TRUE)
+#smallset <- select(examData, Revise, Exam, Anxiety)
+cor(smallset)
+```
+cor.test
+```{r}
+cor.test(smallset$Anxiety, smallset$Exam)
+```
+```{r}
+cor.test(smallset$Revise, smallset$Anxiety)
+```
+```{r}
+cor.test(smallset$Revise, smallset$Exam)
+```
+With this knowledge, we can say there is a strong relationship between all three - *however*, these are all bivariate
+We could look at r^2, but those too, do not look at unique variance accouted by either variable
+Partial correlations try to accomplish this: a correlation between two varibles when they effect of a thrid is held constant
+
+```{r message=FALSE, warning=FALSE}
+# Calculate partial correlations with the ppcor library
+library(ppcor)
+```
+```{r}
+# pcor.test(x,y,z)
+pcor.test(smallset$Anxiety, smallset$Exam, smallset$Revise)
+# this gives you the effect of x and y and pulling out the effect of z 
+
+```
+We see that the correlation between Anxiety and Exam has decreased from -.44 to -.24 when pulling out the effects of the Revise variable
+
+```{r}
+pcor.test(smallset$Revise, smallset$Exam, smallset$Anxiety)
+# Looking at the correlation between Revise and Exam and pulling out the effects o Anxiety.  
+```
+We see a decrease in the correlation of Revise and Exam with Anxiety is pulled out.  With the estimate going from .39 to .13.  but we can also see that is is no longer significant in terms of the p value. 
+
+```{r}
+pcor.test(smallset$Revise, smallset$Anxiety, smallset$Exam)
+```
+-.70
+
+## Partial and Semi-Partial correlations, Part 2
+ 
+Semi-partial correlations control for the effect of a third variable on only one of the two variables
+testing for it is spcor.test
+  This tests the correlation between x and y, but pulls out the effect of z on y only. 
+```{r}
+spcor.test(smallset$Anxiety, smallset$Exam, smallset$Revise)
+```
+We can see that this analysis also lowered the correlation yet again.  But now it is no longer significant
+```{r}
+spcor.test(smallset$Revise, smallset$Anxiety, smallset$Exam)
+```
+
+ 
+## Test stuff
+```{r}
+rcorr(smallset, type = 'pearson')
+```
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
