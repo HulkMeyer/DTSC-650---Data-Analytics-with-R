@@ -53,10 +53,12 @@ max.numwomen
 Compute the means and standard deviations for **MENTHLTH** comparing caregivers who managed personal care such as giving medications, feeding, dressing, or bathing and those who did not.  The output should be a data frame.  
 ```{r}
 mean_std_caregivers <- data %>%
-  filter(CRGVPERS == 1 | CRGVPERS == 2) %>%
+  filter(CRGVPERS <= 2) %>%
+  mutate(MENTHLTH = replace(MENTHLTH, MENTHLTH == 88, 0)) %>%
+  filter(MENTHLTH <= 30) %>%
   select(CRGVPERS, MENTHLTH) %>%
-  group_by(CRGVPERS) %>%
   na.omit() %>%
+  group_by(CRGVPERS) %>%
   summarise(mean_health = mean(MENTHLTH), sd_health = sd(MENTHLTH))
 
 Q3 <- round(as.data.frame(mean_std_caregivers),2)
@@ -82,6 +84,7 @@ Marital Status variable = marital
 ```{r}
 Menhlth_marital <- data %>%
   select(MENTHLTH, MARITAL) %>%
+  mutate(MENTHLTH = replace(MENTHLTH, MENTHLTH == 88, 0)) %>% #replace 88 (no bad days) with 0
   filter(MENTHLTH <= 30 & MARITAL <= 6)
 Menhlth_marital_reg <- lm(MENTHLTH ~ MARITAL, Menhlth_marital)
 Q5 <- summary(Menhlth_marital_reg)
@@ -94,11 +97,12 @@ Use **summarise** to compare the mean number of days in the past 30 days mental 
 ```{r}
 Menhlth_marital2 <- data %>%
   select(MENTHLTH, MARITAL) %>%
+  mutate(MENTHLTH = replace(MENTHLTH, MENTHLTH == 88, 0)) %>% #replace 88 (no bad days) with 0
   filter(MENTHLTH <= 30 & MARITAL <= 6) %>%
 # above is the same as from problem 5 explanations
   group_by(MARITAL) %>%
   summarise(mean_mental = mean(MENTHLTH))
-round(Menhlth_marital2,2)
+round(as.data.frame(Menhlth_marital2),2)
 ```
 
 ## Problem 7
@@ -106,10 +110,13 @@ Calculate the means and standard deviations of **MENTHLTH** for those who have h
 ```{r}
 no_hlthins_stroke_mental <- data %>%
   filter(HLTHPLN1 == 2 & CVDSTRK3 <= 2) %>%
+  mutate(MENTHLTH = replace(MENTHLTH, MENTHLTH == 88, 0)) %>%
+  filter(MENTHLTH <= 30) %>%
   select(CVDSTRK3, MENTHLTH) %>%
+  na.omit() %>%
   group_by(CVDSTRK3) %>%
   summarise(mean_mental = mean(MENTHLTH), sd_mental = sd(MENTHLTH))
-round(as.data.frame(no_hlthins_stroke_mental,2))
+round(as.data.frame(no_hlthins_stroke_mental),2)
 ```
 
 ## Problem 8
@@ -133,7 +140,10 @@ Calculate the variance in number of days a respondent drank alcohol in the past 
 ```{r}
 drink_exercise_var <- data %>%
   filter(SEX == 1) %>%
+  mutate(ALCDAY5 = replace(ALCDAY5, ALCDAY5 == 888, 100)) %>%
+  filter(between(ALCDAY5,100,199)) %>%
   select(ALCDAY5, EXRACT11) %>%
+  na.omit() %>%
   group_by(EXRACT11) %>%
   summarise(var.drinks = var(ALCDAY5)) %>%
   arrange(desc(var.drinks)) %>%
@@ -152,7 +162,8 @@ Address the values of any variables for instance is "none' equal to a value othe
 final_data <- data %>%
   select(VETERAN3, MENTHLTH, MARITAL, EXRACT11) %>%
   na.omit(EXRACT11) %>% #Removing none or NA responses
-  filter(MENTHLTH != 88 | MARITAL != 9) #Removing None and Refused Responses
+  mutate(MENTHLTH = replace(MENTHLTH, MENTHLTH == 88, 0)) %>% #replace 88 (no bad days) with 0
+  filter(MARITAL != 9) #Removing Refused Responses
 final_data
 ```
 
@@ -172,7 +183,7 @@ final_data_no_out <- final_data %>%
       #Removing values for Don't know and Refused from the exercise variable
   filter(EXRACT11 <= 98)
       #Came back and added this as still had some 99 values showing up when I did the visualizations
-        #This took care of the issue. Did not do it initially as the 98 Value is for Other forms of exercise that are not listed
+        #This took care of the issue. Did not do it initially as the 98 Value is for "Other" forms of exercise that are not listed
 final_data_no_out
 ```
 
@@ -231,13 +242,29 @@ final_data_multi_reg <- lm( MENTHLTH ~ VETERAN3 + MARITAL + EXRACT11, data = fin
   # Shows that all predictors are significant
   # Look at the correlations between the variables
 #cor(final_data_no_out_bi)
+  #No huge positive or negative correlations.  Highest correlation is with Marital and Menthlth ~ .10798
 all_final_data_models <- ols_step_all_possible(final_data_multi_reg)
   #all_final_data_models shoes that final_data_multi_reg is best by R-Square and Adj.R-Square
 AIC(final_data_multi_reg)
-  #631304.1
+  #1929353
 final_data_multi_reg2 <- lm( MENTHLTH ~ MARITAL + EXRACT11, data = final_data_no_out_bi) # second highest R and Adj. R from the all_final_data_model
 #summary(final_data_multi_reg2)
 AIC(final_data_multi_reg2)
-  #631549.5
+  #1929509
 Q14 <- final_data_multi_reg
 ```
+
+```{r}
+drink_exercise_var <- data %>%
+  filter(SEX == 1) %>%
+  mutate(ALCDAY5 = replace(ALCDAY5, ALCDAY5 == 888, 100)) %>%
+  filter(between(ALCDAY5,100,199)) %>%
+  select(ALCDAY5, EXRACT11)
+  
+drink_exercise_var
+```
+```{r}
+all_final_data_models
+
+```
+
